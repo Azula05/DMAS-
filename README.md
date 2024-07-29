@@ -3,7 +3,7 @@ This repository contains the pipeline for designing primers for Double-mismatch 
 
 ## Installation
 ### Requirements
-The user has the choice of providing the chromosome, start and end position information (--coords). If this information is not provided, the given template is mapped against a reference genome. For this, the user has to download or build the bowtie2 index files of their organism of choice and have them available for the tool (--index_bowtie).
+The user has the choice of providing the chromosome, start and end position information (--coords). If this information is not provided, the given template is mapped against a reference genome. For this, the user has to [download](https://genome-idx.s3.amazonaws.com/bt/GRCh38_noalt_as.zip) or build the bowtie2 index files of their organism of choice and have them available for the tool (--index_bowtie).
 
 ## Usage
 The input file should contain the sequence and optionally the sequence coordinates (chr:start-end). It is recommende that the sequence contains at least 150 nucleotides.
