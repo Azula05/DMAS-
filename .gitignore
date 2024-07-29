@@ -1,5 +1,4 @@
-Assets/GRCh38/index_bowtie/*.bt2
-Assets/GRCh38/index_bowtie/*.fa
+Assets/GRCh38/index_bowtie/*
 work/
 Test
 Docker/nupack-*/
