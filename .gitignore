@@ -1,6 +1,7 @@
-Data/
-Output/
+Assets/GRCh38/index_bowtie/*.bt2
+Assets/GRCh38/index_bowtie/*.fa
 work/
+Test
 Docker/nupack-*/
 .nextflow
 .nextflow.*
