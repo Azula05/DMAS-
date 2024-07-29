@@ -1,0 +1,8 @@
+Data/
+Output/
+work/
+Docker/nupack-*/
+.nextflow
+.nextflow.*
+input.txt
+.DS_Store
