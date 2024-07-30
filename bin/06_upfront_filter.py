@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# Arguments
 import argparse
 import os
 
@@ -23,15 +24,15 @@ parser.add_argument("-t", nargs=1, required=True, help="sequence")
 parser.add_argument("-u", nargs=1, required=True, help="file with secondary structures")
 args = parser.parse_args()
 
-
+# Determine SNP type
 def split_up(sequence):
     """
     Pre-processes input into different sequences and determines SNP type
     Argument: DNA template to design primers for
     Returns: splitted up template, SNP and SNP type
     """
-    before = sequence.split("/")[0]
-    after = sequence.split("/")[1].rstrip()
+    before = sequence.split("/")[0]     # Normal nucleotide
+    after = sequence.split("/")[1].rstrip() # Mutant nucleotide
     before, wt = before.split("[")      # sequence before SNP, wild type nucleotide
     length = len(before)                # = position where allele-specific primer anneals
     m, after = after.split("]")         # mutant nucleotide, sequence after SNP
@@ -43,7 +44,7 @@ def split_up(sequence):
         snp_type = "deletion"
     return before, after, length, wt, m, snp_type
 
-
+# Generate templates for exchange SNP (WT)
 def templ_generation_exchange(before, after, wt):
     """
     Creates 6 templates from pre-processed sequence as input for primer3:
@@ -89,6 +90,7 @@ end = int(end)
 targeted_snp_pos = int(targeted_snp_pos)
 seq_length = len(seq)
 seq_ID = os.path.splitext(args.t[0])[0]
+seq_ID = seq_ID.split("/")[-1]
 
 
 # get separate parts of input sequence
@@ -125,7 +127,6 @@ if upfront_filter == "yes" or upfront_filter == "snp":
                 SNP_all.append(SNP_pos)
                 SNP_pos += 1
     SNP_file.close()
-
 
 # Adding secondary structure positions to SEQUENCE_EXCLUDED_REGION
 if upfront_filter == "yes" or upfront_filter == "str":                      # If secondary structure filter is on

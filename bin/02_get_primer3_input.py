@@ -118,7 +118,6 @@ for templ_ID, templ_seq in seqs.items():
     # screen primers against library on which they cannot anneal (only if 
     # user specified to do so)
     if args.m[0] != "no":
-        print(args.m[0])
         output.write("PRIMER_MISPRIMING_LIBRARY=" + args.m[0] + "\n")
         output.write("PRIMER_MAX_LIBRARY_MISPRIMING=" + args.M[0] + "\n")
     output.write("=")

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-
+"""
+This script is meant to get the secondary structure of the template sequences using NUPACK.
+"""
 from nupack import *
 import argparse
 import os
@@ -11,6 +13,7 @@ args = parser.parse_args()
 
 # get seq ID from file name
 seq_ID = os.path.splitext(args.t[0])[0]
+seq_ID = seq_ID.split("/")[-1]
 # get sequence from input file
 seq = open(args.t[0]).readline().rstrip().split('\t')[0]
 
