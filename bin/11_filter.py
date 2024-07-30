@@ -26,16 +26,19 @@ design_list = set()
 amp_fold_dict = {}
 
 for line in sec_str_amp:
+    # NO PRIMERS COULD BE DESIGNED
     if len(line.split('\t')) == 2:
         no_design_list.add(line.split('\t')[0])
+    # PRIMERS COULD BE DESIGNED
     else:
         seq_ID, templ_ID, primer_ID = line.split('\t')[0].split('_')
         design_list.add(seq_ID + "_" + templ_ID)
+        # SECUNDARY STRUCTURE INFO AMPLICONS
         amp_fold_dict[line.split('\t')[0]] = line.rstrip().split('\t')[1:]
 
 
 # file with all designed primers for this sequence
-all_primers = open(args.p[0])           
+all_primers = open(args.p[0])        
 seq_ID = os.path.splitext(args.i[0])[0]
 
 # make a new file for the filtered primers
@@ -56,8 +59,8 @@ total_primers = 0
 # warning_snp = 0
 # warning_sec_str = 0
 
-# get mutant variation
 
+# get mutant variation
 seq = open(args.i[0]).readline().split('\t')[0]
 
 c = 0
@@ -70,6 +73,7 @@ for nt in seq:
 # if no primers could be designed
 if os.path.getsize(args.p[0]) == 0:
     design = 0
+
 
 # rev comp dict
 comp = {'A':'T', 'T':'A', 'C':'G', 'G':'C'}
@@ -88,25 +92,27 @@ for primer_pair in all_primers:
     f_len = int(f_len)
     r_pos = int(r_pos)
     r_len = int(r_len)
-
-    complete_ID = seq_ID + '_' + templ_ID + '_' + primer_ID
     
+    complete_ID = seq_ID + '_' + templ_ID + '_' + primer_ID
     filter_str = ""
     warning_str = ""
-
+    
     # off targets
     if complete_ID in spec_list:
         filter_str = filter_str + "FAIL_specificity_"
+
 
     # get amplicon folding info into dict
     amp_fold_avoid = {}
     amp_fold_avoid_pos = {}
     deltag, str_pos, str_pos_nr = amp_fold_dict[complete_ID]
+    deltag = deltag.replace('[', '').replace(']', '').strip()
     amp_fold_avoid[primer_ID] = float(deltag)
     amp_fold_avoid_pos[primer_ID] = str_pos
 
 
     fold_amp_avoid = amp_fold_avoid_pos[primer_ID]
+
 
     if fold_amp_avoid != '[]':
         fold_amp_avoid = fold_amp_avoid.replace('[', "").replace(']', '').split(', ')
@@ -118,7 +124,6 @@ for primer_pair in all_primers:
         filter_str = filter_str + 'FAIL_fold_amplicon_'
     elif (amp_fold_avoid[primer_ID] < -5) & any(x in range(r_pos - r_len - f_pos, r_pos - f_pos + 1) for x in fold_amp_avoid):
         filter_str = filter_str + 'FAIL_fold_amplicon_'
-    
 
 
     # if all tests succeded => primer pair passed filters
@@ -126,6 +131,7 @@ for primer_pair in all_primers:
         filter_str = "PASS_"
         primer_found = 1
 
+ 
     # gather info to add to log file
     if filter_str == "PASS_":
         passed += 1
@@ -138,6 +144,7 @@ for primer_pair in all_primers:
 
     if templ_ID[6:9] == 'fwd':
         mutant_seq = f_seq[:-1] + mutant
+
     elif templ_ID[6:9] == 'rev':
         mutant_seq = r_seq[:-1] + comp[mutant]
 

@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser(description="give arguments to filter script")
 parser.add_argument('-f', nargs=1, required=True, help="stringency of filtering primer specificity")
 
 args = parser.parse_args()
-
+spec_filter = args.f[0]
 
 # this script summarises the SAM output file to give a PASS or FAIL for each primer pair
 

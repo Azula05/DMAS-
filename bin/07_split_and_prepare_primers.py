@@ -16,7 +16,7 @@ for file_name in file_list:
 
 
 for file_name in file_list_in:
-	os.system("/bin/primer3-2.6.1/src/primer3_core --output=out-" + file_name + " --p3_settings_file=${settings_ch} " + file_name)
+	os.system("primer3_core --output=out-" + file_name + " --p3_settings_file=${settings_ch} " + file_name)
 
 
 
