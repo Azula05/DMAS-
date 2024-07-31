@@ -45,9 +45,7 @@ for line in file:
     sequence = sequence.upper()
     ## INPUT
     sequence_input= sequence_input.split("/")
-    left = sequence_input[0].replace("[", "")
-    right = sequence_input[1].split("]")[1]
-    sequence_input = left + right
+    sequence_input = sequence_input[0].replace("[", "") + sequence_input[1].split("]")[1]
     sequence_input = sequence_input.upper()
     ## compare
     if sequence_input != sequence:
