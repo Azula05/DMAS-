@@ -6,7 +6,6 @@ Positions that are found in the common SNP database are avoided because they can
 # Import the required libraries
 import argparse
 import os
-import re
 
 # Define the arguments that the user must provide
 parser = argparse.ArgumentParser(description='give arguments to main snp script')
@@ -29,7 +28,5 @@ seq, pos, SNP_pos = input_file.split('\t')
 chrom, start, end = pos.rstrip().replace(":", "-").split("-")
 
 # Retrieve SNPs from database
-os.system("bigBedToBed " + SNP_url + " -chrom="+ chrom + " -start=" + start + " -end=" + end + " snps_" + seq_ID + ".bed") # TEMP SOLUTION, SEE BASECAMP
-
-#open("snps_" + seq_ID + ".bed", 'w')
+os.system("bigBedToBed " + SNP_url + " -chrom="+ chrom + " -start=" + start + " -end=" + end + " snps_" + seq_ID + ".bed") # TEMP SOLUTION, SEE BASECAMP (normally position should always be there now)
 
