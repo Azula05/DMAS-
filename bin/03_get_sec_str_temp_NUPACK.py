@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-This script is meant to get the secondary structure of the template sequences using NUPACK.
+This script is part of the main DMAS pipeline and is used to get the secondary structure of the template sequences using NUPACK.
+It requires the user to provide the template sequence -t
 """
+
+# ARGUMENT HANDLING
 from nupack import *
 import argparse
 import os

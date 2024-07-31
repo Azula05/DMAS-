@@ -3,7 +3,7 @@
 This script is part of the main DMAS pipeline and is used to get the secondary structure of the template sequences using ViennaRNA.
 It requires the user to provide the template sequence -t
 """
-
+# ARGUMENT HANDLING
 import argparse
 import os
 
@@ -11,11 +11,15 @@ parser = argparse.ArgumentParser(description="give arguments to main DMAS script
 parser.add_argument("-t", nargs=1, required=True, help="sequence")
 args = parser.parse_args()
 
-# get seq ID from file name
+#######################################################################################################################
+################   GET SECONDARY STRUCTURE OF THE TEMPLATE SEQUENCES USING VIENNARNA   ################################
+#######################################################################################################################
+
+# SEQUENCE ID
 seq_ID = os.path.splitext(args.t[0])[0]
 seq_ID = seq_ID.split("/")[-1]
 
-# get sequence from input file
+# SEQUENCE
 seq = open(args.t[0]).readline().rstrip().split('\t')[0]
 
 # retrieve the wild type of the seq (whole sequence with [N/])
@@ -23,7 +27,6 @@ wild = seq.split("[")[0] + seq.split("[")[1].split("/")[0] + seq.split("]")[1]
 # retrieve the mutant type of the seq (whole sequence with [/N])
 mutant = seq.split("[")[0] + seq.split("/")[1].split("]")[0] + seq.split("]")[1]
 
-# ViennaRNA model initiation
 ############################################################################################
 ##################################   Wild type   ###########################################
 ############################################################################################
