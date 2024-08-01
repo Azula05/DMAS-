@@ -6,7 +6,7 @@ All positions are considered for mismatch except when one is specified.
 """
 # ARGUMENT HANDLING
 import argparse
-import os
+from Bio.Seq import Seq
 
 parser = argparse.ArgumentParser(description='give arguments to main snp script')
 parser.add_argument("-a", nargs=1, required=True, help="primer min left 3 prime distance") # Is dit nodig? wat doet dit?
@@ -73,42 +73,164 @@ def split_up(sequence):
     return before, after, length, wt, m, snp_type
 
 ############################################################################################################
-#################################    FUNCTION: Exchange WT    ##############################################
+###################################    FUNCTION: AS 1MM TEMPLATES    #######################################
 ############################################################################################################
-# Generate templates for exchange SNP (WT)
-def templ_generation_exchange(before, after, wt, position_mismatch):
+
+def AS_1MM_templates(before, after, wt, m, position_mismatch, seq_ID):
+
+    # A) Allele specific primers (1MM)
+    # A good length for PCR primers is generally around 18-30 bases
+
+    # Function to get the reverse complement of a sequence
+    def reversecomplement(seq):
+        my_seq = Seq(seq)
+        complement = my_seq.reverse_complement()
+        return str(complement)
+    
+    # A) FORWARD AS PRIMERS (1MM)
+    AS_FWD_WT = before + wt
+    AS_FWD_MUT = before + m
+
+    # B) REVERSE AS PRIMERS (1MM)
+    REV_WT = wt + after
+    AS_REV_WT = reversecomplement(REV_WT)
+    REV_MUT = m + after
+    AS_REV_MUT = reversecomplement(REV_MUT)
+    AS_primers = {seq_ID + "_AS_FWD_WT" : AS_FWD_WT, seq_ID + "_AS_FWD_MUT" : AS_FWD_MUT, seq_ID + "_AS_REV_WT" : AS_REV_WT, seq_ID + "_AS_REV_MUT" : AS_REV_MUT}
+    return(AS_primers)
+
+############################################################################################################
+####################################    FUNCTION: FWD templates    #########################################
+############################################################################################################
+
+def FORWARD_TEMPLATES(before, wt, m, position_mismatch, seq_ID):
+    # FORWARD PRIMERS
+    ART_primers = {}
+    if position_mismatch == "all":
+        pos = [2,3,4]
+    else:
+        pos = [position_mismatch]
+    for mm_pos in pos:
+        seq = list(before)          # Everything that comes before the SNP
+        Original = seq[-mm_pos]     # Original base
+        # Replace C (C,A,T)
+        if Original == "C":
+            temp = list(before)
+            # Replacement
+            temp[-mm_pos] = "A"
+            # WT FWD
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_MUT"] = MUT
+        if Original == "C":
+            temp = list(before)
+            temp[-mm_pos] = "C"
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_MUT"] = MUT
+        if Original == "C":
+            temp = list(before)
+            temp[-mm_pos] = "T"
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_MUT"] = MUT         
+        # Replace G (G,A,T)
+        if Original == "G":
+            temp = list(before)
+            temp[-mm_pos] = "G"
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_MUT"] = MUT
+        if Original == "G":
+            temp = list(before)
+            temp[-mm_pos] = "A"
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_MUT"] = MUT
+        if Original == "G":
+            temp = list(before)
+            temp[-mm_pos] = "T"
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_MUT"] = MUT   
+        # Replace T (T,G,C)
+        if Original == "T":
+            temp = list(before)
+            temp[-mm_pos] = "T"
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_MUT"] = MUT
+        if Original == "T":
+            temp = list(before)
+            temp[-mm_pos] = "G"
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_MUT"] = MUT
+        if Original == "T":
+            temp = list(before)
+            temp[-mm_pos] = "C"
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_MUT"] = MUT      
+        # Replace A (A,G,C)
+        if Original == "A":
+            temp = list(before)
+            temp[-mm_pos] = "A"
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_MUT"] = MUT
+        if Original == "A":
+            temp = list(before)
+            temp[-mm_pos] = "G"
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_MUT"] = MUT
+        if Original == "A":
+            temp = list(before)
+            temp[-mm_pos] = "C"
+            WT = "".join(temp) + wt
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_WT"] = WT
+            # MUT FWD
+            MUT = "".join(temp) + m
+            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_MUT"] = MUT
+    return ART_primers
+
+############################################################################################################
+####################################    FUNCTION: Exchange    ##############################################
+############################################################################################################
+
+# Generate templates for exchange SNP
+#def templ_generation_exchange(before, after, wt, m, mm_pos, seq_ID):
     """
-    Creates 6 templates from pre-processed sequence as input for primer3:
-        - 3 possible artificial mismatch positions (2, 3, 4)
-        - 2 AS primer (forward, reverse)
+    Creates templates from pre-processed sequence as input for primer3:
+        - 2 AS primer (forward, reverse) => 1MM
+        - 3 possible artificial mismatch positions (2, 3, 4) => create long primers for temperature and primer validation
     Args: pre-processed sequences and the SNP
     Returns: list with adjusted templates
-    """    
-    # A) FORWARD PRIMERS
-    # forward allele-specific primer (mismatch created in sequence before SNP to the 5' end)
-    seqs = {}
-    # all 3 positions are considered (2, 3, 4)
-    if position_mismatch == "all":
-        #A) FORWARD PRIMERS
-        for mm_pos in range(2,5):
-            seq = list(before) # Everything that comes before the SNP
-            # Replace C (C,A,T)
-            # Replace G (G,A,T)
-            # Replace T (T,G,C)
-            # Replace A (A,G,C)
+    """
 
-        # B) REVERSE PRIMERS
-        for mm_pos in range(2,5): # wrong in the old script (1,2,3 instead of 2,3,4)
-            seq = list(after)
-            # nucleotide is replaced with G, except when it already contains a G,
-            # in that case it is replace with T
-            if seq[mm_pos] == "G" or seq[mm_pos] == "g":
-                seq[mm_pos] = "T"
-            else:
-                seq[mm_pos] = "G"
-            seqs["templ-rev-"+str(mm_pos+1)] = before + wt + "".join(seq) # +1 as the REV primer is counted in the other direction (does not start at 0)
-
-    return(seqs)
 
 ############################################################################################################
 #################################    Test   ############################################
