@@ -171,12 +171,190 @@ print(ART_primers_FWD)
 
 def REVERSE_TEMPLATES(after, wt, m, position_mismatch, seq_ID):
     ART_primers = {}
+    def reversecomplement(seq):
+        my_seq = Seq(seq)
+        complement = my_seq.reverse_complement()
+        return str(complement)
     if position_mismatch == "all":
         pos = [2,3,4]
     else:
         pos = [position_mismatch]
     for mm_pos in pos:
-        seq = list(before)          # Everything that comes before the SNP
-        Original = seq[-mm_pos]     # Original base
-        # Replace C (C,A,T)
+            seq = list(after)          # Everything that comes before the SNP
+            Original = seq[mm_pos]     # Original base
+            # Replace C (C,A,T)
+            if Original == "C":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "C"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "C"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_MUT"] = "".join(MUT)
+            if Original == "C":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "A"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "A"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_MUT"] = "".join(MUT)
+            if Original == "C":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "T"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "T"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_MUT"] = "".join(MUT)
+            # Replace G (G,A,T)
+            if Original == "G":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "G"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "G"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_MUT"] = "".join(MUT)
+            if Original == "G":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "A"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "A"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_MUT"] = "".join(MUT)
+            if Original == "G":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "T"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "T"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_MUT"] = "".join(MUT)
+            # Replace A (A,G,C)
+            if Original == "A":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "A"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "A"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_MUT"] = "".join(MUT)
+            if Original == "A":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "G"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "G"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_MUT"] = "".join(MUT)
+            if Original == "A":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "C"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "C"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_MUT"] = "".join(MUT)
+            # Replace T (T,G,C)
+            if Original == "T":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "T"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "T"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_MUT"] = "".join(MUT)
+            if Original == "T":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "G"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "G"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_MUT"] = "".join(MUT)
+            if Original == "T":
+                temp = list(after)
+                # WT REV
+                WT = wt + "".join(temp)
+                WT = reversecomplement(WT)
+                WT = list(WT)
+                WT[-(mm_pos+1)] = "C"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_WT"] = "".join(WT)
+                # MUT REV
+                MUT = m + "".join(temp)
+                MUT = reversecomplement(MUT)
+                MUT = list(MUT)
+                MUT[-(mm_pos+1)] = "C"
+                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_MUT"] = "".join(MUT)
     return ART_primers
+
+ART_primers_REV = REVERSE_TEMPLATES(after, wt, m, position_mismatch, seq_ID)
+print(ART_primers_REV)
