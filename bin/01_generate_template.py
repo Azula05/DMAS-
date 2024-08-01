@@ -61,6 +61,7 @@ if coords == "true":
             c += 1
         # the separate inpute files
         seq_file = open("seq-" + str(seq_ID_nr) + ".txt", "w")
+        sequence = sequence.upper()
         seq_file.write(sequence + '\t' + position + '\t' + str(snp_pos) + '\n')
         seq_file.close()
         # Add warning if the sequence is shorter than 150 nt
@@ -132,7 +133,7 @@ elif coords == 'false':
 
         seq_file = open(seq_ID + ".txt", "w")
         print(usr_input_file[n])
-        seq_file.write(usr_input_file[n].rstrip() + '\t' + sam_dict[seq_ID] + '\t' + str(snp_pos) + '\n')
+        seq_file.write(usr_input_file[n].rstrip().upper() + '\t' + sam_dict[seq_ID] + '\t' + str(snp_pos) + '\n')
         seq_file.close()
         n += 1
     if fails != []:
