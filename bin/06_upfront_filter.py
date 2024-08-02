@@ -7,6 +7,8 @@ All positions are considered for mismatch except when one is specified.
 # ARGUMENT HANDLING
 import argparse
 from Bio.Seq import Seq
+from Bio.SeqUtils import MeltingTemp as mt
+from Bio.Seq import Seq
 
 parser = argparse.ArgumentParser(description='give arguments to main snp script')
 parser.add_argument("-a", nargs=1, required=True, help="primer min left 3 prime distance") # Is dit nodig? wat doet dit?
@@ -27,6 +29,13 @@ parser.add_argument("-s", nargs=1, required=True, help="bed file with SNPs")
 parser.add_argument("-t", nargs=1, required=True, help="seq-file with template")
 parser.add_argument("-u", nargs=1, required=True, help="file with secondary structures")
 parser.add_argument("-p", nargs=1, required=True, help="Position of the mismatch eighter all, 2, 3 or 4 postions to 5' end")
+parser.add_argument("-dnac", nargs=1, required=True, help="concetration of the oligos µM")
+parser.add_argument("-Na", nargs=1, required=True, help="Na concentration mM")
+parser.add_argument("-K", nargs=1, required=True, help="K concentration mM")
+parser.add_argument("-Tris", nargs=1, required=True, help="Tris concentration mM")
+parser.add_argument("-Mg", nargs=1, required=True, help="Mg concentration mM")
+parser.add_argument("-dNTPs", nargs=1, required=True, help="dNTPs concentration mM")
+
 args = parser.parse_args()
 
 MIN_LEFT_3_PRIME_DISTANCE = args.a[0]
@@ -47,6 +56,12 @@ SNP_file = args.s[0]
 seq_file = args.t[0]
 sec_str_file = args.u[0]
 position_mismatch = args.p[0]
+dnac = args.dnac[0]
+Na = args.Na[0]
+K = args.K[0]
+Tris = args.Tris[0]
+Mg = args.Mg[0]
+dNTPs = args.dNTPs[0]
 
 ############################################################################################################
 #################################    FUNCTION: SPLIT SEQUENCE    ###########################################
@@ -421,6 +436,7 @@ def REVERSE_TEMPLATES(after, wt, m, position_mismatch, seq_ID):
     Returns: list with adjusted templates
     """
 
+# Temperature prediction
 
 ############################################################################################################
 ###########################################    INSERTION   #################################################
