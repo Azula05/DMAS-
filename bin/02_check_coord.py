@@ -36,7 +36,7 @@ for line in file:
         
         return sequence
 
-    # CHECK IF TEH SEQUENCES MATCH
+    # CHECK IF THE SEQUENCES MATCH
     ## UCSC
     chromosome = position.split(":")[0]
     start = int(position.split(":")[1].split("-")[0])-1
