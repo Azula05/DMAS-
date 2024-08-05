@@ -10,6 +10,13 @@ wt = "A"
 m = "C"
 position_mismatch = "all"
 seq_ID = "seq-0"
+
+dnac = 250
+Na_conc = 50
+K_conc = 0
+Tris_conc = 75
+Mg_conc = 3
+dNTPs_conc = 1.2
 """
 Creates templates from pre-processed sequence as input for primer3:
     - 2 AS primer (forward, reverse) => 1MM
@@ -372,14 +379,14 @@ print(ART_primers_REV)
 temps_AS = {}
 for key, value in AS_primers.items():
     myseq = Seq(value)
-    match = mt.Tm_NN(myseq, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=250, dnac2=250, Na=50, K=0, Tris=75, Mg=3, dNTPs=1.2)
+    match = mt.Tm_NN(myseq, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
     # get the temperature to be around 60
     while not match <= 60.5:
         myseq = Seq(myseq[1:])
         # stop if the primer gets to short
         if len(myseq) <= 16:
             break
-        match = mt.Tm_NN(myseq, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=250, dnac2=250, Na=50, K=0, Tris=75, Mg=3, dNTPs=1.2)
+        match = mt.Tm_NN(myseq, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
     temps_AS[key] = [str(myseq), '%0.3f' % match, len(myseq)]
 
 print("temps_AS:")   
@@ -395,25 +402,25 @@ for key, value in ART_primers_FWD.items():
     original_FWD_MUT = Seq(before+m)
     if key.split("_")[-1] == "WT":
         template_2MM = original_FWD_MUT.complement()
-        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=250, dnac2=250, Na=50, K=0, Tris=75, Mg=3, dNTPs=1.2)
+        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
         while not mismatch_TM <= 55.5:
             myseq = Seq(myseq[1:])
             template_2MM = Seq(template_2MM[1:])
             # stop if the primer gets to short
             if len(myseq) <= 16:
                 break
-            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=250, dnac2=250, Na=50, K=0, Tris=75, Mg=3, dNTPs=1.2)
+            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
         temps_FWD[key] = [str(myseq), '%0.3f' % mismatch_TM, len(myseq)]
     elif key.split("_")[-1] == "MUT":
         template_2MM = original_FWD_WT.complement()
-        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=250, dnac2=250, Na=50, K=0, Tris=75, Mg=3, dNTPs=1.2)
+        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
         while not mismatch_TM <= 55.5:
             myseq = Seq(myseq[1:])
             template_2MM = Seq(template_2MM[1:])
             # stop if the primer gets to short
             if len(myseq) <= 16:
                 break
-            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=250, dnac2=250, Na=50, K=0, Tris=75, Mg=3, dNTPs=1.2)
+            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
         temps_FWD[key] = [str(myseq), '%0.3f' % mismatch_TM, len(myseq)]
 
 
@@ -429,25 +436,25 @@ for key, value in ART_primers_REV.items():
     original_REV_MUT = Seq(m+after).reverse_complement()
     if key.split("_")[-1] == "WT":
         template_2MM = original_REV_MUT.complement()
-        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=250, dnac2=250, Na=50, K=0, Tris=75, Mg=3, dNTPs=1.2)
+        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
         while not mismatch_TM <= 55.5:
             myseq = Seq(myseq[1:])
             template_2MM = Seq(template_2MM[1:])
             # stop if the primer gets to short
             if len(myseq) <= 16:
                 break
-            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=250, dnac2=250, Na=50, K=0, Tris=75, Mg=3, dNTPs=1.2)
+            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
         temps_REV[key] = [str(myseq), '%0.3f' % mismatch_TM, len(myseq)]
     elif key.split("_")[-1] == "MUT":
         template_2MM = original_REV_WT.complement()
-        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=250, dnac2=250, Na=50, K=0, Tris=75, Mg=3, dNTPs=1.2)
+        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
         while not mismatch_TM <= 55.5:
             myseq = Seq(myseq[1:])
             template_2MM = Seq(template_2MM[1:])
             # stop if the primer gets to short
             if len(myseq) <= 16:
                 break
-            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=250, dnac2=250, Na=50, K=0, Tris=75, Mg=3, dNTPs=1.2)
+            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
         temps_REV[key] = [str(myseq), '%0.3f' % mismatch_TM, len(myseq)]
 
 print("temps_REV:")
