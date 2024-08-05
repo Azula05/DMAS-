@@ -9,6 +9,7 @@ import argparse
 from Bio.Seq import Seq
 from Bio.SeqUtils import MeltingTemp as mt
 from Bio.Seq import Seq
+import os
 
 parser = argparse.ArgumentParser(description='give arguments to main snp script')
 parser.add_argument("-a", nargs=1, required=True, help="primer min left 3 prime distance") # Is dit nodig? wat doet dit?
@@ -423,11 +424,31 @@ def REVERSE_TEMPLATES(after, wt, m, position_mismatch, seq_ID):
     return ART_primers
 
 ############################################################################################################
+#####################################    Tm prediction/primers    ##########################################
+############################################################################################################
+# templates might be subject to change Tm prediction not implemented yet for this reason
+
+############################################################################################################
+#####################################    1) Check the sequence    ##########################################
+############################################################################################################
+# get all the info from the sequence input file
+seq_info = open(args.t[0]).readline().rstrip()
+seq, pos, targeted_snp_pos = seq_info.split('\t')
+chrom, start, end = pos.replace(':', '-').split('-')
+start = int(start)
+end = int(end)
+targeted_snp_pos = int(targeted_snp_pos)
+seq_length = len(seq)
+seq_ID = os.path.splitext(args.t[0])[0]
+seq_ID = seq_ID.split("/")[-1]
+before, after, length, wt, m, snp_type = split_up(seq) # note: length is 1-based and indicates the position of the SNP
+
+############################################################################################################
 ##########################################    Exchange    ##################################################
 ############################################################################################################
 
 # Generate templates for exchange SNP
-#def templ_generation_exchange(before, after, wt, m, mm_pos, seq_ID):
+if snp_type == "exchange":
     """
     Creates templates from pre-processed sequence as input for primer3:
         - 2 AS primer (forward, reverse) => 1MM
@@ -435,13 +456,20 @@ def REVERSE_TEMPLATES(after, wt, m, position_mismatch, seq_ID):
     Args: pre-processed sequences and the SNP
     Returns: list with adjusted templates
     """
+    # Allele specific primers (1MM)
+    AS_primers = AS_1MM_templates(before, after, wt, m, position_mismatch, seq_ID)
+    # Forward primers
+    FWD_primers = FORWARD_TEMPLATES(before, wt, m, position_mismatch, seq_ID)
+    # Reverse primers
+    REV_primers = REVERSE_TEMPLATES(after, wt, m, position_mismatch, seq_ID)
+
+
 
 # Temperature prediction
 
 ############################################################################################################
 ###########################################    INSERTION   #################################################
 ############################################################################################################
-
 
 ############################################################################################################
 ###########################################    DELETION   ##################################################
