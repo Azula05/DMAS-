@@ -9,7 +9,7 @@ An error message will be given and the script will exit.
 import argparse
 import requests
 argparser = argparse.ArgumentParser(description="give arguments to check the coordinates")
-argparser.add_argument("-i", nargs=1, required=True, help="generated seq- input file")
+argparser.add_argument("-i", nargs=1, required=True, help="generated DMAS- input file")
 args = argparser.parse_args()
 file = open(args.i[0]).readlines()
 

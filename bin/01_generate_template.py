@@ -60,7 +60,7 @@ if coords == "true":
                 snp_pos = c
             c += 1
         # the separate inpute files
-        seq_file = open("seq-" + str(seq_ID_nr) + ".txt", "w")
+        seq_file = open("DMAS-" + str(seq_ID_nr) + ".txt", "w")
         sequence = sequence.upper()
         seq_file.write(sequence + '\t' + position + '\t' + str(snp_pos) + '\n')
         seq_file.close()
@@ -84,7 +84,7 @@ elif coords == 'false':
     # loop through input and make a input file for bowtie (fasta) so coordinates can be retrieved
     for i in range(0, len(usr_input_file)):
         # for bowtie2 to recognize the fasta file, > has to precede the sequence
-        seq_fasta.write(">seq-" + str(i) + "\n")
+        seq_fasta.write(">DMAS-" + str(i) + "\n")
         seq_fasta.write(usr_input_file[i].rstrip().split("[")[0] + usr_input_file[i].rstrip().split("[")[1].split("/")[0] + usr_input_file[i].rstrip().split("]")[1] + "\n")
     seq_fasta.close()
 
@@ -121,7 +121,7 @@ elif coords == 'false':
     usr_input_file = open(args.i[0]).readlines()
     n= 0
     for i in range(0, len(usr_input_file)):
-        seq_ID = "seq-" + str(i) 
+        seq_ID = "DMAS-" + str(i) 
         seq = list(usr_input_file[i])
 
         # position of the snp

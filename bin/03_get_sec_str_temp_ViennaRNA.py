@@ -79,7 +79,7 @@ str_not_ok = []
 # if seq has secondary structures ("(" or ")"), retrieve the positions and add it to a list
 for index, j in enumerate(structure):
     if j == "(" or j == ")":
-        str_not_ok.append(index)
+        str_not_ok.append(index) # 0-based
 
 # write list with positions of secondary structures to output file
 # generate the output file

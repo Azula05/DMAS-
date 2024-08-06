@@ -27,6 +27,21 @@ input_file = open(args.i[0]).readline().rstrip()
 seq, pos, SNP_pos = input_file.split('\t')
 chrom, start, end = pos.rstrip().replace(":", "-").split("-")
 
-# Retrieve SNPs from database
-os.system("bigBedToBed " + SNP_url + " -chrom="+ chrom + " -start=" + start + " -end=" + end + " snps_" + seq_ID + ".bed") # TEMP SOLUTION, SEE BASECAMP (normally position should always be there now)
+####################################################################################################
+####################################     SNP_url "off"   ###########################################
+####################################################################################################
 
+# Ignore common SNPs in the region of the fusionRNA
+if SNP_url == 'off':
+	avoid_range = '[]'
+
+####################################################################################################
+####################################    SNP_url "url"    ###########################################
+####################################################################################################
+
+# with the url to the database SNPs are searched
+else:
+    SNP_all = []
+    avoid_range = []
+    # Retrieve SNPs from database
+    os.system("bigBedToBed " + SNP_url + " -chrom="+ chrom + " -start=" + str(start) + " -end=" + str(end) + " snps_" + seq_ID + ".bed")
