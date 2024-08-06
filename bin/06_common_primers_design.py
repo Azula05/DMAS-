@@ -80,7 +80,7 @@ seq_length = len(template_seq) # 1-based
 seq_ID = os.path.splitext(args.t[0])[0]
 seq_ID = seq_ID.split('/')[-1]
 
-Primer3_common = open("Primer3_common_primers.txt", "w")
+Primer3_common = open("Primer3_common_primers_"+ seq_ID +".txt", "w")
 Primer3_common.write("SEQUENCE_ID=" + seq_ID + "_common" "\n")
 Primer3_common.write("SEQUENCE_TEMPLATE=" + str(template_seq) + "\n")
 Primer3_common.write("PRIMER_NUM_RETURN=" + args.b[0] + "\n")
