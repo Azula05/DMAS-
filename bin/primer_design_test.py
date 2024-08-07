@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from Bio.Seq import Seq
 from Bio.SeqUtils import MeltingTemp as mt
+from Bio.SeqUtils import gc_fraction
 
 sequence = "TGTTATGAACAGCAAATAAAAGAAACTAAAACGATCCTGAGACTTCCACACTGATGCAATCATTCGTCTGTTTCCCATTCTAAACTGTACCCTGTTACTT[A/C]TCCCCTTCCTATGACATGAACTTAACCATAGAAAAGAAGGGGAAAGAAAACATCAAGCGTCCCATAGACTCACCCTGAAGTTCTCAGGATCCACGTGCAG"
 
@@ -9,7 +10,7 @@ after = "TCCCCTTCCTATGACATGAACTTAACCATAGAAAAGAAGGGGAAAGAAAACATCAAGCGTCCCATAGACTC
 wt = "A"
 m = "C"
 position_mismatch = "all"
-seq_ID = "seq-0"
+seq_ID = "DMAS-0"
 
 dnac = 250
 Na_conc = 50
@@ -17,22 +18,16 @@ K_conc = 0
 Tris_conc = 75
 Mg_conc = 3
 dNTPs_conc = 1.2
+Single_MM_Tm = 55
+Zero_MM_Tm = 60
 """
 Creates templates from pre-processed sequence as input for primer3:
     - 2 AS primer (forward, reverse) => 1MM
     - 3 possible artificial mismatch positions (2, 3, 4) => create long primers for temperature and primer validation
-Args: pre-processed sequences and the SNP
-Returns: list with adjusted templates
 """
 
-def templ_generation_exchange(before, after, wt, m, position_mismatch, seq_ID):
-    """
-    Creates templates from pre-processed sequence as input for primer3:
-        - 2 AS primer (forward, reverse) => 1MM
-        - 3 possible artificial mismatch positions (2, 3, 4) => create long primers for temperature and primer validation
-    Args: pre-processed sequences and the SNP
-    Returns: list with adjusted templates
-    """
+
+def templ_generation_exchange(before, after, wt, m, seq_ID):
     # A) Allele specific primers (1MM)
     # A good length for PCR primers is generally around 18-30 bases
 
@@ -42,420 +37,224 @@ def templ_generation_exchange(before, after, wt, m, position_mismatch, seq_ID):
         complement = my_seq.reverse_complement()
         return str(complement)
     
-    # A) FORWARD AS PRIMERS (1MM)
-    AS_FWD_WT = before + wt
-    AS_FWD_MUT = before + m
+    # A) FORWARD templates
+    temp_FWD_WT = before + wt
+    temp_FWD_MUT = before + m
 
-    # B) REVERSE AS PRIMERS (1MM)
+    # B) REVERSE templates
     REV_WT = wt + after
-    AS_REV_WT = reversecomplement(REV_WT)
+    temp_REV_WT = reversecomplement(REV_WT)
     REV_MUT = m + after
-    AS_REV_MUT = reversecomplement(REV_MUT)
-    AS_primers = {seq_ID + "_AS_FWD_WT" : AS_FWD_WT, seq_ID + "_AS_FWD_MUT" : AS_FWD_MUT, seq_ID + "_AS_REV_WT" : AS_REV_WT, seq_ID + "_AS_REV_MUT" : AS_REV_MUT}
-    return(AS_primers)
+    temp_REV_MUT = reversecomplement(REV_MUT)
+    templates = {}
+    templates[seq_ID + "_FWD_WT"] = temp_FWD_WT
+    templates[seq_ID + "_FWD_MUT"] = temp_FWD_MUT
+    templates[seq_ID + "_REV_WT"] = temp_REV_WT
+    templates[seq_ID + "_REV_MUT"] = temp_REV_MUT
+    return(templates)
 
 
 
-AS_primers = templ_generation_exchange(before, after, wt, m, position_mismatch, seq_ID)
-print("AS_primers:")
-print(AS_primers)
+templates = templ_generation_exchange(before, after, wt, m, seq_ID)
 
 
-def FORWARD_TEMPLATES(before, wt, m, position_mismatch, seq_ID):
-    # FORWARD PRIMERS
-    ART_primers = {}
-    if position_mismatch == "all":
-        pos = [2,3,4]
-    else:
-        pos = [position_mismatch]
-    for mm_pos in pos:
-        seq = list(before)          # Everything that comes before the SNP
-        Original = seq[-mm_pos]     # Original base
-        # Replace C (C,A,T)
-        if Original == "C":
-            temp = list(before)
-            # Replacement
-            temp[-mm_pos] = "A"
-            # WT FWD
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_MUT"] = MUT
-        if Original == "C":
-            temp = list(before)
-            temp[-mm_pos] = "C"
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_MUT"] = MUT
-        if Original == "C":
-            temp = list(before)
-            temp[-mm_pos] = "T"
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_MUT"] = MUT         
-        # Replace G (G,A,T)
-        if Original == "G":
-            temp = list(before)
-            temp[-mm_pos] = "G"
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_MUT"] = MUT
-        if Original == "G":
-            temp = list(before)
-            temp[-mm_pos] = "A"
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_MUT"] = MUT
-        if Original == "G":
-            temp = list(before)
-            temp[-mm_pos] = "T"
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_MUT"] = MUT   
-        # Replace T (T,G,C)
-        if Original == "T":
-            temp = list(before)
-            temp[-mm_pos] = "T"
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_T_FWD_MUT"] = MUT
-        if Original == "T":
-            temp = list(before)
-            temp[-mm_pos] = "G"
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_MUT"] = MUT
-        if Original == "T":
-            temp = list(before)
-            temp[-mm_pos] = "C"
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_MUT"] = MUT      
-        # Replace A (A,G,C)
-        if Original == "A":
-            temp = list(before)
-            temp[-mm_pos] = "A"
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_A_FWD_MUT"] = MUT
-        if Original == "A":
-            temp = list(before)
-            temp[-mm_pos] = "G"
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_G_FWD_MUT"] = MUT
-        if Original == "A":
-            temp = list(before)
-            temp[-mm_pos] = "C"
-            WT = "".join(temp) + wt
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_WT"] = WT
-            # MUT FWD
-            MUT = "".join(temp) + m
-            ART_primers[seq_ID + "_" + str(mm_pos) + "_C_FWD_MUT"] = MUT
-    return ART_primers
+####################################################################################################################################################################
 
-ART_primers_FWD = FORWARD_TEMPLATES(before, wt, m, position_mismatch, seq_ID)
+#Zero_MM_exchange(templates, seq_ID, Single_MM_Tm):
+"""
+Shorten the templates from 35 to minimum 16 to be as close to the
+zero MM tm as possible (match). The remaining sequence is the perfect match primer.
+In the library: ID, primer, Tm_0MM, length
+"""
 
-print("ART_primers_FWD:")
-print(ART_primers_FWD)
-
-def REVERSE_TEMPLATES(after, wt, m, position_mismatch, seq_ID):
-    ART_primers = {}
-    def reversecomplement(seq):
-        my_seq = Seq(seq)
-        complement = my_seq.reverse_complement()
-        return str(complement)
-    if position_mismatch == "all":
-        pos = [2,3,4]
-    else:
-        pos = [position_mismatch]
-    for mm_pos in pos:
-            seq = list(after)          # Everything that comes before the SNP
-            Original = seq[mm_pos]     # Original base
-            # Replace C (C,A,T)
-            if Original == "C":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "C"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "C"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_MUT"] = "".join(MUT)
-            if Original == "C":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "A"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "A"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_MUT"] = "".join(MUT)
-            if Original == "C":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "T"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "T"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_MUT"] = "".join(MUT)
-            # Replace G (G,A,T)
-            if Original == "G":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "G"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "G"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_MUT"] = "".join(MUT)
-            if Original == "G":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "A"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "A"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_MUT"] = "".join(MUT)
-            if Original == "G":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "T"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "T"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_MUT"] = "".join(MUT)
-            # Replace A (A,G,C)
-            if Original == "A":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "A"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "A"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_A_REV_MUT"] = "".join(MUT)
-            if Original == "A":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "G"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "G"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_MUT"] = "".join(MUT)
-            if Original == "A":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "C"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "C"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_MUT"] = "".join(MUT)
-            # Replace T (T,G,C)
-            if Original == "T":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "T"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "T"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_T_REV_MUT"] = "".join(MUT)
-            if Original == "T":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "G"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "G"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_G_REV_MUT"] = "".join(MUT)
-            if Original == "T":
-                temp = list(after)
-                # WT REV
-                WT = wt + "".join(temp)
-                WT = reversecomplement(WT)
-                WT = list(WT)
-                WT[-(mm_pos+1)] = "C"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_WT"] = "".join(WT)
-                # MUT REV
-                MUT = m + "".join(temp)
-                MUT = reversecomplement(MUT)
-                MUT = list(MUT)
-                MUT[-(mm_pos+1)] = "C"
-                ART_primers[seq_ID + "_" + str(mm_pos) + "_C_REV_MUT"] = "".join(MUT)
-    return ART_primers
-
-ART_primers_REV = REVERSE_TEMPLATES(after, wt, m, position_mismatch, seq_ID)
-print("ART_primers_REV:")
-print(ART_primers_REV)
-
-##################################################################################################################################
-
-# Just to test the concept
-
-## 1MM (Keep at 60°C)
-temps_AS = {}
-for key, value in AS_primers.items():
-    myseq = Seq(value)
-    match = mt.Tm_NN(myseq, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
-    # get the temperature to be around 60
-    while not match <= 60.5:
+def match_primers(myseq, match_TM, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc):
+    myseq = Seq(myseq[-36:])
+    match_TM = mt.Tm_NN(myseq, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+    while not match_TM <= ( float(Zero_MM_Tm)+0.5 ):
         myseq = Seq(myseq[1:])
         # stop if the primer gets to short
         if len(myseq) <= 16:
             break
-        match = mt.Tm_NN(myseq, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
-    temps_AS[key] = [str(myseq), '%0.3f' % match, len(myseq)]
+        match_TM = mt.Tm_NN(myseq, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+    return str(myseq), '%0.3f' % match_TM, len(myseq)
 
-print("temps_AS:")   
-print(temps_AS)
+# initiate the dictionary
+primers = {}
+# WT on WT perfect match
+## FORWARD
+myseq = templates[seq_ID + "_FWD_WT"]
+seq, Tm, length = match_primers(myseq, Zero_MM_Tm, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+GC_content = gc_fraction(seq) * 100
+primers[seq_ID + "_0MM_F_WT"] = str(seq), float(Tm), float('%0.3f' % GC_content), int(length)
 
-# Primer 3 should then find a complemantary primer
+## REVERSE
+myseq = templates[seq_ID + "_REV_WT"]
+seq, Tm, length = match_primers(myseq, Zero_MM_Tm, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+GC_content = gc_fraction(seq) * 100
+primers[seq_ID + "_0MM_R_WT"] = str(seq), float(Tm), float('%0.3f' % GC_content), int(length)
+# MUT on MUT perfect match
+## FORWARD
+myseq = templates[seq_ID + "_FWD_MUT"]
+seq, Tm, length = match_primers(myseq, Zero_MM_Tm, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+GC_content = gc_fraction(seq) * 100
+primers[seq_ID + "_0MM_F_MUT"] = str(seq), float(Tm), float('%0.3f' % GC_content), int(length)
+## REVERSE
+myseq = templates[seq_ID + "_REV_MUT"]
+seq, Tm, length = match_primers(myseq, Zero_MM_Tm, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+GC_content = gc_fraction(seq) * 100
+primers[seq_ID + "_0MM_R_MUT"] = str(seq), float(Tm), float('%0.3f' % GC_content), int(length)
 
-## FORWARD PRIMERS (Ideally delta of 5°C so around 55°C)
-temps_FWD = {}
-for key, value in ART_primers_FWD.items():
-    myseq = Seq(value)
-    original_FWD_WT = Seq(before+wt)
-    original_FWD_MUT = Seq(before+m)
-    if key.split("_")[-1] == "WT":
-        template_2MM = original_FWD_MUT.complement()
-        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
-        while not mismatch_TM <= 55.5:
-            myseq = Seq(myseq[1:])
-            template_2MM = Seq(template_2MM[1:])
-            # stop if the primer gets to short
-            if len(myseq) <= 16:
-                break
-            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
-        temps_FWD[key] = [str(myseq), '%0.3f' % mismatch_TM, len(myseq)]
-    elif key.split("_")[-1] == "MUT":
-        template_2MM = original_FWD_WT.complement()
-        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
-        while not mismatch_TM <= 55.5:
-            myseq = Seq(myseq[1:])
-            template_2MM = Seq(template_2MM[1:])
-            # stop if the primer gets to short
-            if len(myseq) <= 16:
-                break
-            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
-        temps_FWD[key] = [str(myseq), '%0.3f' % mismatch_TM, len(myseq)]
+####################################################################################################################################################################
+
+# Single_MM_exchange(templates, seq_ID, Single_MM_Tm):
+"""
+Shorten the templates from 35 to minimum 16 to be as close to the
+single MM tm as possible. The remaining sequence is the single MM primer.
+In the library: ID, primer, Tm_0MM, tm_1MM, length
+"""
+def Single_MM_primers(myseq, complement, Single_MM_Tm , dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc):
+    myseq = Seq(myseq[-36:])
+    complement = Seq(complement[-36:])
+    mismatch_TM = mt.Tm_NN(myseq, c_seq= complement, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+    while not mismatch_TM <= ( float(Single_MM_Tm)+0.5 ):
+        myseq = Seq(myseq[1:])
+        complement = Seq(complement[1:])
+        # stop if the primer gets to short
+        if len(myseq) <= 16:
+            break
+        mismatch_TM = mt.Tm_NN(myseq, c_seq=complement, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+    return str(myseq), '%0.3f' % mismatch_TM, len(myseq)
+# WT primer on the MUT template => 1MM
+primer_templates = {}
+# WT on MUT : 1MM
+## FORWARD
+forward = templates[seq_ID + "_FWD_WT"]
+complent = Seq(templates[seq_ID + "_FWD_MUT"]).complement()
+seq, Tm_1MM, length = Single_MM_primers(forward, complent, Single_MM_Tm, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+primer_templates[seq_ID + "_0" + str(Seq(m).complement()) + "_F_WT"] = seq, float(Tm_1MM), int(length)
+## REVERSE
+forward = templates[seq_ID + "_REV_WT"]
+complent = Seq(templates[seq_ID + "_REV_MUT"]).complement()
+seq, Tm_1MM, length = Single_MM_primers(forward, complent, Single_MM_Tm, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+primer_templates[seq_ID + "_0" + str(Seq(m).complement()) + "_R_WT"] = seq, float(Tm_1MM), int(length)
+
+# MUT on WT : 1MM
+## FORWARD
+forward = templates[seq_ID + "_FWD_MUT"]
+complent = Seq(templates[seq_ID + "_FWD_WT"]).complement()
+seq, Tm_1MM, length = Single_MM_primers(forward, complent, Single_MM_Tm, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+primer_templates[seq_ID + "_0" + str(Seq(wt).complement()) + "_F_MUT"] = seq, float(Tm_1MM), int(length)
+## REVERSE
+forward = templates[seq_ID + "_REV_MUT"]
+complent = Seq(templates[seq_ID + "_REV_WT"]).complement()
+seq, Tm_1MM, length = Single_MM_primers(forward, complent, Single_MM_Tm, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+primer_templates[seq_ID + "_0" + str(Seq(wt).complement()) + "_R_MUT"] = seq, float(Tm_1MM), int(length)
+
+####################################################################################################################################################################
+
+# Double_MM_exchange(primer_templates, seq_ID):
+def exchange (seq, position_mismatch):
+    exchanged = {}
+    if position_mismatch == "all":
+        position_mismatch = [2, 3, 4]
+    else:
+        position = [position_mismatch]
+    seq = list(seq)
+    for position in position_mismatch:
+        position = position +1
+        if seq[-position] == "A":
+            seq[-position] = "T"
+            exchanged[str(position-1) + "T"] = "".join(seq)
+            seq[-position] = "C"
+            exchanged[str(position-1) + "C"] = "".join(seq)
+            seq[-position] = "G"
+            exchanged[str(position-1) + "G"] = "".join(seq)
+            seq[-position] = "A"
+        elif seq[-position] == "T":
+            seq[-position] = "A"
+            exchanged[str(position-1) + "A"] = "".join(seq)
+            seq[-position] = "C"
+            exchanged[str(position-1) + "C"] = "".join(seq)
+            seq[-position] = "G"
+            exchanged[str(position-1) + "G"] = "".join(seq)
+            seq[-position] = "T"
+        elif seq[-position] == "C":
+            seq[-position] = "A"
+            exchanged[str(position-1) + "A"] = "".join(seq)
+            seq[-position] = "T"
+            exchanged[str(position-1) + "T"] = "".join(seq)
+            seq[-position] = "G"
+            exchanged[str(position-1) + "G"] = "".join(seq)
+            seq[-position] = "C"
+        elif seq[-position] == "G":
+            seq[-position] = "A"
+            exchanged[str(position-1) + "A"] = "".join(seq)
+            seq[-position] = "T"
+            exchanged[str(position-1) + "T"] = "".join(seq)
+            seq[-position] = "C"
+            exchanged[str(position-1) + "C"] = "".join(seq)
+            seq[-position] = "G"
+    return exchanged
+
+# WT primer on the MUT 
+## FORWARD
+forward = primer_templates[seq_ID + "_0" + str(Seq(m).complement()) + "_F_WT"][0]
+# 1MM
+complement = primer_templates[seq_ID + "_0" + str(Seq(wt).complement()) + "_F_MUT"][0]
+complement = str(Seq(complement).complement())
+match_Tm = '%0.3f' % mt.Tm_NN(forward, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+Single_MM_Tm = '%0.3f' % mt.Tm_NN(forward, c_seq=complement, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+# 2MM
+exchanged = exchange (forward, position_mismatch)
+for mutation ,oligo in exchanged.items():
+    double_MM_TM = '%0.3f' %  mt.Tm_NN(oligo, c_seq=complement, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+    GC_content = '%0.2f' % (gc_fraction(oligo) * 100)
+    mismatch_delta = '%0.3f' % abs(float(Single_MM_Tm) - float(double_MM_TM))
+    primers[seq_ID + "_" + mutation + "_F_WT"] = oligo, float(match_Tm), float(Single_MM_Tm), float(double_MM_TM), float(mismatch_delta), float(GC_content), len(oligo)
+## REVERSE
+reverse = primer_templates[seq_ID + "_0" + str(Seq(m).complement()) + "_R_WT"][0]
+# 1MM
+complement = primer_templates[seq_ID + "_0" + str(Seq(wt).complement()) + "_R_MUT"][0]
+complement = str(Seq(complement).complement())
+match_Tm = '%0.3f' % mt.Tm_NN(reverse, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+Single_MM_Tm = '%0.3f' % mt.Tm_NN(reverse, c_seq=complement, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+# 2MM
+exchanged = exchange (reverse, position_mismatch)
+for mutation ,oligo in exchanged.items():
+    double_MM_TM = '%0.3f' %  mt.Tm_NN(oligo, c_seq=complement, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+    GC_content = '%0.2f' % (gc_fraction(oligo) * 100)
+    mismatch_delta = '%0.3f' % abs(float(Single_MM_Tm) - float(double_MM_TM))
+    primers[seq_ID + "_" + mutation + "_R_WT"] = oligo, float(match_Tm), float(Single_MM_Tm), float(double_MM_TM), float(mismatch_delta), float(GC_content), len(oligo)
 
 
-print("temps_FWD:")
-print(temps_FWD)
+# MUT primer on the WT
+# ## FORWARD
+forward = primer_templates[seq_ID + "_0" + str(Seq(wt).complement()) + "_F_MUT"][0]
+# 1MM
+complement = primer_templates[seq_ID + "_0" + str(Seq(m).complement()) + "_F_WT"][0]
+complement = str(Seq(complement).complement())
+match_Tm = '%0.3f' % mt.Tm_NN(forward, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+Single_MM_Tm = '%0.3f' % mt.Tm_NN(forward, c_seq=complement, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+# 2MM
+exchanged = exchange (forward, position_mismatch)
+for mutation ,oligo in exchanged.items():
+    double_MM_TM = '%0.3f' %  mt.Tm_NN(oligo, c_seq=complement, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+    GC_content = '%0.2f' % (gc_fraction(oligo) * 100)
+    mismatch_delta = '%0.3f' % abs(float(Single_MM_Tm) - float(double_MM_TM))
+    primers[seq_ID + "_" + mutation + "_F_MUT"] = oligo, float(match_Tm), float(Single_MM_Tm), float(double_MM_TM), float(mismatch_delta), float(GC_content), len(oligo)
 
-
-## REVERSE PRIMERS (Ideally delta of 5°C so around 55°C)
-temps_REV = {}
-for key, value in ART_primers_REV.items():
-    myseq = Seq(value)
-    original_REV_WT = Seq(wt+after).reverse_complement()
-    original_REV_MUT = Seq(m+after).reverse_complement()
-    if key.split("_")[-1] == "WT":
-        template_2MM = original_REV_MUT.complement()
-        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
-        while not mismatch_TM <= 55.5:
-            myseq = Seq(myseq[1:])
-            template_2MM = Seq(template_2MM[1:])
-            # stop if the primer gets to short
-            if len(myseq) <= 16:
-                break
-            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
-        temps_REV[key] = [str(myseq), '%0.3f' % mismatch_TM, len(myseq)]
-    elif key.split("_")[-1] == "MUT":
-        template_2MM = original_REV_WT.complement()
-        mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
-        while not mismatch_TM <= 55.5:
-            myseq = Seq(myseq[1:])
-            template_2MM = Seq(template_2MM[1:])
-            # stop if the primer gets to short
-            if len(myseq) <= 16:
-                break
-            mismatch_TM = mt.Tm_NN(myseq, c_seq=template_2MM, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
-        temps_REV[key] = [str(myseq), '%0.3f' % mismatch_TM, len(myseq)]
-
-print("temps_REV:")
-print(temps_REV)
+## REVERSE
+reverse = primer_templates[seq_ID + "_0" + str(Seq(wt).complement()) + "_R_MUT"][0]
+# 1MM
+complement = primer_templates[seq_ID + "_0" + str(Seq(m).complement()) + "_R_WT"][0]
+complement = str(Seq(complement).complement())
+match_Tm = '%0.3f' % mt.Tm_NN(reverse, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+Single_MM_Tm = '%0.3f' % mt.Tm_NN(reverse, c_seq=complement, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+# 2MM
+exchanged = exchange (reverse, position_mismatch)
+for mutation ,oligo in exchanged.items():
+    double_MM_TM = '%0.3f' %  mt.Tm_NN(oligo, c_seq=complement, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
+    GC_content = '%0.2f' % (gc_fraction(oligo) * 100)
+    mismatch_delta = '%0.3f' % abs(float(Single_MM_Tm) - float(double_MM_TM))
+    primers[seq_ID + "_" + mutation + "_R_MUT"] = oligo, float(match_Tm), float(Single_MM_Tm), float(double_MM_TM), float(mismatch_delta), float(GC_content), len(oligo)
+print(primers)
