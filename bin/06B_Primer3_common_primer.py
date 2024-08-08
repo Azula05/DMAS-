@@ -91,6 +91,7 @@ for line in primers:
 primers.close()
 
 # write the forward input file for primer3
+## settings in the input file will overwrite the settings in the primer3 settings file
 Primer3_common = open("Primer3_" + seq_ID + "_common_primer_REV.txt", "w")
 Primer3_common.write("SEQUENCE_ID=" + seq_ID + "_common_REV" "\n")
 Primer3_common.write("SEQUENCE_TEMPLATE=" + str(template_seq) + "\n")
