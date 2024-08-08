@@ -265,4 +265,11 @@ for mutation ,oligo in exchanged.items():
     mismatch_delta = '%0.3f' % abs(float(Single_MM_Tm) - float(double_MM_TM))
     # add to the dictionary with the primers
     primers[seq_ID + "_" + mutation + "_R_MUT"] = oligo, float(match_Tm), float(Single_MM_Tm), float(double_MM_TM), float(mismatch_delta), float(GC_content), len(oligo)
+
+# drop the 0MM primers
+primers.pop(seq_ID + "_0MM_F_WT")
+primers.pop(seq_ID + "_0MM_R_WT")
+primers.pop(seq_ID + "_0MM_F_MUT")
+primers.pop(seq_ID + "_0MM_R_MUT")
+
 print(primers)
