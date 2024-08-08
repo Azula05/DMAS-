@@ -287,7 +287,10 @@ if snp_type == "exchange":
 
     #=======================================================================================================#
 
-    print(primers)
+    # C) WRITE PRIMERS TO FILE
+    primers_file = open(seq_ID + "_primers.tsv", "a")
+    for ID, attributes in primers.items():
+        primers_file.write(ID + "\t" + attributes[0] + "\t" + str(attributes[1]) + "\t" + str(attributes[2]) + "\t" + str(attributes[3]) + "\t" + str(attributes[4]) + "\t" + str(attributes[5]) + "\t" + str(attributes[6]) + "\n")
     
 ############################################################################################################
 ###########################################    INSERTION   #################################################
