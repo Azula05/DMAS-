@@ -151,10 +151,10 @@ with open(file_output,'w') as output:
                 left_validation = arguments[10].split("=")[1]
                 right_validation = arguments[11].split("=")[1]
                 # change the line
-                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + left_validation + "\t" + right_validation + "\n"
+                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + left_validation + "\t" + right_validation + "\n"
                 output.write(line)
             except:
-                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
+                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
                 output.write(line)
         if "_F_MUT" in line:
             # validate the primers
@@ -176,10 +176,10 @@ with open(file_output,'w') as output:
                 left_validation = arguments[10].split("=")[1]
                 right_validation = arguments[11].split("=")[1]
                 # change the line
-                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + left_validation + "\t" + right_validation + "\n"
+                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + left_validation + "\t" + right_validation + "\n"
                 output.write(line)
             except:
-                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
+                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
                 output.write(line)
         # Reverse primers
         if "_R_WT" in line:
@@ -201,10 +201,10 @@ with open(file_output,'w') as output:
                 left_validation = arguments[10].split("=")[1]
                 right_validation = arguments[11].split("=")[1]
                 # change the line
-                line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + left_validation + "\t" + right_validation + "\n"
+                line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD)) + "\t" + left_validation + "\t" + right_validation + "\n"
                 output.write(line)
             except:
-                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
+                line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
                 output.write(line)
         if "_R_MUT" in line:
             # validate the primers
@@ -225,10 +225,10 @@ with open(file_output,'w') as output:
                 left_validation = arguments[10].split("=")[1]
                 right_validation = arguments[11].split("=")[1]
                 # change the line
-                line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + left_validation + "\t" + right_validation + "\n"
+                line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD)) + "\t" + left_validation + "\t" + right_validation + "\n"
                 output.write(line)
             except:
-                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
+                line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD))  + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
                 output.write(line)
 output.close()
 
