@@ -182,11 +182,11 @@ if snp_type == "exchange":
         while not mismatch_TM <= (float(Single_MM_Tm_goal)-1.5):
             previous_difference = absolute_difference
             # stop if the primer gets to short
-            if len(myseq) <= 16:
-                break
-            else:
-                myseq = Seq(myseq[1:])
-                complement = Seq(complement[1:])
+            ##if len(myseq) <= 16:
+            ##    break
+            #else:
+            myseq = Seq(myseq[1:])
+            complement = Seq(complement[1:])
             mismatch_TM = mt.Tm_NN(myseq, c_seq=complement, nn_table=mt.DNA_NN4, saltcorr=7, dnac1=dnac, dnac2=dnac, Na=Na_conc, K=K_conc, Tris=Tris_conc, Mg=Mg_conc, dNTPs=dNTPs_conc)
             absolute_difference = abs(mismatch_TM - float(Single_MM_Tm_goal))
             if absolute_difference < previous_difference:
