@@ -202,10 +202,10 @@ if snp_type == "exchange":
     exchanged = exchange (forward, position_mismatch)
     ### Loop through the exchanged primers
     for mutation ,oligo in exchanged.items():
-        #### 1MM 
-        complement_1MM = str(Seq(oligo).complement()[:-1]) + str(Seq(m).complement())
+        #### 1MM
+        complement_1MM_W_W = str(Seq(temp_FWD_WT).complement()[-len(oligo):])
             # change the length of the oligo to match the target Tm as close as possible
-        oligo, complement_1MM ,Single_MM_Tm, length = Single_MM_Tm_match(oligo, complement_1MM, Single_MM_Tm_goal, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+        oligo, complement_1MM ,Single_MM_Tm, length = Single_MM_Tm_match(oligo, complement_1MM_W_W, Single_MM_Tm_goal, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
         #### 2MM
         complement_2MM = Seq(str(templates[seq_ID + "_FWD_MUT"])[-len(oligo):]).complement()
         #### 0MM
@@ -217,7 +217,7 @@ if snp_type == "exchange":
         mismatch_delta = '%0.3f' % abs(float(Single_MM_Tm) - float(double_MM_TM))
         #### add to the dictionary with the primers
         primers[seq_ID + "_" + mutation + "_F_WT"] = oligo, float(match_Tm), float(Single_MM_Tm), float(double_MM_TM), float(mismatch_delta), float(GC_content), len(oligo)
-
+    #exit("break")
     ### REVERSE
     reverse = templates[seq_ID + "_REV_WT"][-36:]
     # change out the 2,3,4 positions
@@ -225,9 +225,9 @@ if snp_type == "exchange":
     ### Loop through the exchanged primers
     for mutation ,oligo in exchanged.items():
         #### 1MM 
-        complement_1MM = str(Seq(oligo).complement()[:-1]) + str(Seq(m).complement())
+        complement_1MM_W_W = str(Seq(temp_REV_WT).complement())[-len(oligo):]
             # change the length of the oligo to match the target Tm as close as possible
-        oligo, complement_1MM ,Single_MM_Tm, length = Single_MM_Tm_match(oligo, complement_1MM, Single_MM_Tm_goal, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+        oligo, complement_1MM ,Single_MM_Tm, length = Single_MM_Tm_match(oligo, complement_1MM_W_W, Single_MM_Tm_goal, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
         #### 2MM
         complement_2MM = Seq(str(templates[seq_ID + "_REV_MUT"])[-len(oligo):]).complement()
         #### 0MM
@@ -248,9 +248,9 @@ if snp_type == "exchange":
     ### calculate the Tm for the primers
     for mutation ,oligo in exchanged.items():
         #### 1MM 
-        complement_1MM = str(Seq(oligo).complement()[:-1]) + str(Seq(wt).complement())
+        complement_1MM_M_M = str(Seq(temp_FWD_MUT).complement())[-len(oligo):]
             #### change the length of the oligo to match the target Tm as close as possible
-        oligo, complement_1MM ,Single_MM_Tm, length = Single_MM_Tm_match(oligo, complement_1MM, Single_MM_Tm_goal, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+        oligo, complement_1MM ,Single_MM_Tm, length = Single_MM_Tm_match(oligo, complement_1MM_M_M, Single_MM_Tm_goal, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
         #### 2MM
         complement_2MM = Seq(str(templates[seq_ID + "_FWD_WT"])[-len(oligo):]).complement()
         #### 0MM
@@ -270,9 +270,9 @@ if snp_type == "exchange":
     ### calculate the Tm for the primers
     for mutation ,oligo in exchanged.items():
         #### 1MM 
-        complement_1MM = str(Seq(oligo).complement()[:-1]) + str(Seq(wt).complement())
+        complement_1MM_M_M = str(Seq(temp_REV_MUT).complement())[-len(oligo):]
             # change the length of the oligo to match the target Tm as close as possible
-        oligo, complement_1MM ,Single_MM_Tm, length = Single_MM_Tm_match(oligo, complement_1MM, Single_MM_Tm_goal, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
+        oligo, complement_1MM ,Single_MM_Tm, length = Single_MM_Tm_match(oligo, complement_1MM_M_M, Single_MM_Tm_goal, dnac, Na_conc, K_conc,Tris_conc,Mg_conc,dNTPs_conc)
         #### 2MM
         complement_2MM = Seq(str(templates[seq_ID + "_REV_WT"])[-len(oligo):]).complement()
         #### 0MM
