@@ -143,12 +143,13 @@ with open(file_output,'w') as output:
     for line in lines:
         # Forward primers
         if "_F_WT" in line:
+            template = left + wt + right
             # validate the primers
             line_list = line.split("\t")
             name = line_list[0]
             ## needs to be an exact match
             lenght = len(line_list[1])
-            temp = left + wt + right
+            temp = left + wt
             forward = temp[-int(lenght):]
             # validation
             command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template + "\nSEQUENCE_PRIMER=" + forward + "\nSEQUENCE_PRIMER_REVCOMP=" + common_REV + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
@@ -167,13 +168,14 @@ with open(file_output,'w') as output:
                 line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
                 output.write(line)
         if "_F_MUT" in line:
+            template_MUT = left + m + right
             # validate the primers
             line_list = line.split("\t")
             name = line_list[0]
             ## needs to be an exact match
             template_MUT = left + m + right
             lenght = len(line_list[1])
-            temp = left + m + right
+            temp = left + m
             forward = temp[-int(lenght):]
             # validation
             command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template_MUT + "\nSEQUENCE_PRIMER=" + forward + "\nSEQUENCE_PRIMER_REVCOMP=" + common_REV + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
@@ -193,13 +195,14 @@ with open(file_output,'w') as output:
                 output.write(line)
         # Reverse primers
         if "_R_WT" in line:
+            template = left + wt + right
             # validate the primers
             line_list = line.split("\t")
             name = line_list[0]
             ## needs to be an exact match
             lenght = len(line_list[1])
-            temp = str(Seq(left + wt + right).reverse_complement())
-            reverse = temp[0:lenght+1]
+            temp = str(Seq(wt + right).reverse_complement())
+            reverse = temp[-lenght:]
             # validation
             command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template + "\nSEQUENCE_PRIMER=" + common_FWD + "\nSEQUENCE_PRIMER_REVCOMP=" + reverse + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
             try:
@@ -217,13 +220,14 @@ with open(file_output,'w') as output:
                 line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
                 output.write(line)
         if "_R_MUT" in line:
+            template_MUT = left + m + right
             # validate the primers
             line_list = line.split("\t")
             name = line_list[0]
             ## needs to be an exact match
             lenght = len(line_list[1])
-            temp = str(Seq(left + m + right).reverse_complement())
-            reverse = temp[0:lenght+1]
+            temp = str(Seq(m + right).reverse_complement())
+            reverse = temp[-lenght:]
             # validation
             command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template_MUT + "\nSEQUENCE_PRIMER=" + common_FWD + "\nSEQUENCE_PRIMER_REVCOMP=" + reverse + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
             try:
@@ -322,9 +326,9 @@ def check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_
         if position >= forward_start and position <= (forward_start + len(forward)):
             sec_FWD.append(position)
     if not SNPs_FWD:
-        SNPs_FWD = "No SNPs found"
+        SNPs_FWD = "0 found"
     if sec_FWD == []:
-        sec_FWD = "No secondary structures found"
+        sec_FWD = "0 predicted"
     # check the reverse primer
     positions_REV = range(reverse_end+1 - len(reverse), reverse_end)
     SNPs_REV = {}
@@ -347,16 +351,55 @@ with open(file_output, 'r') as table:
 with open(file_output, 'w') as output:
     for line in lines:
         line = line.rstrip().split("\t")
+        # check FWD WT 
         if "F_WT" in line[0]:
+            # get the amplicon and primer positions
             template = left + wt + right
             forward = left + wt
             forward = forward[-len(line[1]):]
             reverse = line[8]
             amplicon, forward_start, reverse_end = get_amplicon(template, forward, reverse) #0-based
+            # cross-reference the positions
             SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
+            # write the line to the output file
+            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\n")
+        # check REV WT
+        if "R_WT" in line[0]:
+            # get the amplicon and primer positions
+            template = left + wt + right
+            forward = line[8]
+            reverse = wt + right
+            reverse = str(Seq(reverse[0:len(line[1])]).reverse_complement())
+            amplicon, forward_start, reverse_end = get_amplicon(template, forward, reverse) #0-based
+            # cross-reference the positions
+            SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
+            # write the line to the output file
+            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\n")
+        # check FWD MUT
+        if "F_MUT" in line[0]:
+            # get the amplicon and primer positions
+            template_MUT = left + m + right
+            forward = left + m
+            forward = forward[-len(line[1]):]
+            reverse = line[8]
+            amplicon, forward_start, reverse_end = get_amplicon(template_MUT, forward, reverse) #0-based
+            # cross-reference the positions
+            SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
+            # write the line to the output file
+            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\n")
+        # check REV MUT
+        if "R_MUT" in line[0]:
+            # get the amplicon and primer positions
+            template_MUT = left + m + right
+            forward = line[8]
+            reverse = m + right
+            reverse = str(Seq(reverse[0:len(line[1])]).reverse_complement())
+            amplicon, forward_start, reverse_end = get_amplicon(template_MUT, forward, reverse) #0-based
+            # cross-reference the positions
+            SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
+            # write the line to the output file
             output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\n")
         
-
 
 table.close()
 output.close()
