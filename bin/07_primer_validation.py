@@ -121,6 +121,54 @@ Reverse.close()
 ######################################   Validate primers   ########################################
 ####################################################################################################
 
+def template_adaptation_left(left, right, name):
+    change = name.split("_")[1]
+    if change == "2A":
+        num = 2
+        change = "A"
+    elif change == "2G":
+        num = 2
+        change = "G"
+    elif change == "2T":
+        num = 2
+        change = "T"
+    elif change == "2C":
+        num = 2
+        change = "C"
+    elif change == "3A":
+        num = 3
+        change = "A"
+    elif change == "3G":
+        num = 3
+        change = "G"
+    elif change == "3T":
+        num = 3
+        change = "T"
+    elif change == "3C":
+        num = 3
+        change = "C"
+    elif change == "4A":
+        num = 4
+        change = "A"
+    elif change == "4G":
+        num = 4
+        change = "G"
+    elif change == "4T":
+        num = 4
+        change = "T"
+    elif change == "4C":
+        num = 4
+        change = "C"
+    left = list(left)
+    left[-num] = change
+    left = "".join(left)
+    right = str(Seq(right).reverse_complement())
+    right = list(right)
+    right[-num] = change
+    right = "".join(right)
+    right = str(Seq(right).reverse_complement())
+    return left , right
+
 # save the old lines in a list
 with open(file_output, 'r') as table:
     lines = table.readlines()
@@ -146,14 +194,12 @@ with open(file_output,'w') as output:
     for line in lines:
         # Forward primers
         if "_F_WT" in line:
-            template = left + wt + right
             # validate the primers
             line_list = line.split("\t")
             name = line_list[0]
-            ## needs to be an exact match
-            lenght = len(line_list[1])
-            temp = left + wt
-            forward = temp[-int(lenght):]
+            changed_L, changed_R = template_adaptation_left(left, right ,name)
+            template = changed_L + wt + right
+            forward = line_list[1]
             # validation
             command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template + "\nSEQUENCE_PRIMER=" + forward + "\nSEQUENCE_PRIMER_REVCOMP=" + common_REV + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
             try:
@@ -170,16 +216,15 @@ with open(file_output,'w') as output:
             except:
                 line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
                 output.write(line)
+
         if "_F_MUT" in line:
-            template_MUT = left + m + right
             # validate the primers
             line_list = line.split("\t")
             name = line_list[0]
             ## needs to be an exact match
-            template_MUT = left + m + right
-            lenght = len(line_list[1])
-            temp = left + m
-            forward = temp[-int(lenght):]
+            changed_L, changed_R = template_adaptation_left(left, right ,name)
+            template_MUT = changed_L + m + right
+            forward = line_list[1]
             # validation
             command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template_MUT + "\nSEQUENCE_PRIMER=" + forward + "\nSEQUENCE_PRIMER_REVCOMP=" + common_REV + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
             try:
@@ -196,16 +241,16 @@ with open(file_output,'w') as output:
             except:
                 line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
                 output.write(line)
+  
         # Reverse primers
         if "_R_WT" in line:
-            template = left + wt + right
             # validate the primers
             line_list = line.split("\t")
             name = line_list[0]
             ## needs to be an exact match
-            lenght = len(line_list[1])
-            temp = str(Seq(wt + right).reverse_complement())
-            reverse = temp[-lenght:]
+            changed_L, changed_R = template_adaptation_left(left, right ,name)
+            template = left + wt + changed_R
+            reverse = line_list[1]
             # validation
             command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template + "\nSEQUENCE_PRIMER=" + common_FWD + "\nSEQUENCE_PRIMER_REVCOMP=" + reverse + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
             try:
@@ -223,14 +268,13 @@ with open(file_output,'w') as output:
                 line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
                 output.write(line)
         if "_R_MUT" in line:
-            template_MUT = left + m + right
             # validate the primers
             line_list = line.split("\t")
             name = line_list[0]
             ## needs to be an exact match
-            lenght = len(line_list[1])
-            temp = str(Seq(m + right).reverse_complement())
-            reverse = temp[-lenght:]
+            changed_L, changed_R = template_adaptation_left(left, right ,name)
+            template_MUT = left + m + changed_R
+            reverse = line_list[1]
             # validation
             command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template_MUT + "\nSEQUENCE_PRIMER=" + common_FWD + "\nSEQUENCE_PRIMER_REVCOMP=" + reverse + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
             try:
