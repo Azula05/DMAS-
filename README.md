@@ -54,3 +54,14 @@ Optional arguments:
     --mis_lib		    fasta file with mispriming library (default: empty)
     --max_mis_lib	    max allowed weighted similarity with any sequence in mispriming library file (default: 12)
 ```
+## Opening a tsv file in excel
+1) Open excel
+2) Press Open
+3) Browse to the file location (output folder)
+4) Make sure the dropdown in the bottom right is set to: "All Files (\*.\*)"
+5) Open the file
+6) A pop-up will appear, select delimited and next
+7) Select Tab
+8) Next
+9) Select general
+10) Press Finish
