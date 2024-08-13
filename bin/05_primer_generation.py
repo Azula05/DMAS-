@@ -19,9 +19,7 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser(description='give arguments to main snp script')
-parser.add_argument("-s",   nargs=1, required=True,     help="bed file with SNPs")
 parser.add_argument("-t",   nargs=1, required=True,     help="seq-file with template")
-parser.add_argument("-u",   nargs=1, required=True,     help="file with secondary structures")
 parser.add_argument("-p",   nargs=1, required=True,     help="Position of the mismatch eighter all, 2, 3 or 4 postions to 5' end")
 parser.add_argument("-dnac", nargs=1, required=True,    help="concetration of the oligos µM")
 parser.add_argument("-Na",  nargs=1, required=True,     help="Na concentration mM")
@@ -35,9 +33,6 @@ args = parser.parse_args()
 
 # Input file
 seq_file = args.t[0]
-# Files with special positions
-SNP_file = args.s[0]
-sec_str_file = args.u[0]
 # Parameters
 position_mismatch = args.p[0]
 dnac = float(args.dnac[0])
