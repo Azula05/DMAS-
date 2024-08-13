@@ -37,7 +37,7 @@ ID = file_template.split("_")[0].replace(".txt", "")
 ID = ID.split("/")[-1]
 # upfront check
 checks = args.q[0]
-SNP_avoid_range = []
+SNP_avoid_range = {}
 sec_str_avoid_range = []
 ####################################################################################################
 ##############################   Add common primers to the table   #################################
@@ -151,7 +151,7 @@ with open(file_output,'w') as output:
             temp = left + wt + right
             forward = temp[-int(lenght):]
             # validation
-            command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template + "\nSEQUENCE_PRIMER=" + forward + "\nSEQUENCE_PRIMER_REVCOMP=" + common_REV + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=65 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
+            command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template + "\nSEQUENCE_PRIMER=" + forward + "\nSEQUENCE_PRIMER_REVCOMP=" + common_REV + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
             try:
                 process = os.popen("echo \"" + command + "\" | primer3_core -p3_settings_file=" + primer3_settings)            
                 validation = process.read()
@@ -176,7 +176,7 @@ with open(file_output,'w') as output:
             temp = left + m + right
             forward = temp[-int(lenght):]
             # validation
-            command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template_MUT + "\nSEQUENCE_PRIMER=" + forward + "\nSEQUENCE_PRIMER_REVCOMP=" + common_REV + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=65 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
+            command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template_MUT + "\nSEQUENCE_PRIMER=" + forward + "\nSEQUENCE_PRIMER_REVCOMP=" + common_REV + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
             try:
                 process = os.popen("echo \"" + command + "\" | primer3_core -p3_settings_file=" + primer3_settings)            
                 validation = process.read()
@@ -201,7 +201,7 @@ with open(file_output,'w') as output:
             temp = str(Seq(left + wt + right).reverse_complement())
             reverse = temp[0:lenght+1]
             # validation
-            command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template + "\nSEQUENCE_PRIMER=" + common_FWD + "\nSEQUENCE_PRIMER_REVCOMP=" + reverse + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=65 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
+            command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template + "\nSEQUENCE_PRIMER=" + common_FWD + "\nSEQUENCE_PRIMER_REVCOMP=" + reverse + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
             try:
                 process = os.popen("echo \"" + command + "\" | primer3_core -p3_settings_file=" + primer3_settings)            
                 validation = process.read()
@@ -225,7 +225,7 @@ with open(file_output,'w') as output:
             temp = str(Seq(left + m + right).reverse_complement())
             reverse = temp[0:lenght+1]
             # validation
-            command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template_MUT + "\nSEQUENCE_PRIMER=" + common_FWD + "\nSEQUENCE_PRIMER_REVCOMP=" + reverse + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=65 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
+            command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template_MUT + "\nSEQUENCE_PRIMER=" + common_FWD + "\nSEQUENCE_PRIMER_REVCOMP=" + reverse + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
             try:
                 process = os.popen("echo \"" + command + "\" | primer3_core -p3_settings_file=" + primer3_settings)            
                 validation = process.read()
@@ -256,12 +256,15 @@ if checks == "yes" or checks =="YES" or checks == "snp" or checks == "SNP":
         if line != "":
             line = line.split("\t")
             position = int(line[1])
+            rs = line[3]
+            WT = line[4]
+            MUT = line[6]
             position = position - start + 1 # 0-based
             # if the position is recognized as a SNP, ignore
             if position == position_of_interest:
                 continue
             else:
-                SNP_avoid_range.append(position)
+                SNP_avoid_range[position] = rs, (WT + "/" + MUT)
     SNPs.close()
 ####################################################################################################
 #################################   Check for secondary structures   ###############################
@@ -310,32 +313,32 @@ def get_amplicon(template, forward_primer, reverse_primer):
 # function to check the primers
 def check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range):
     # check the forward primer
-    SNPs_FWD = []
+    SNPs_FWD = {}
     sec_FWD = []
-    for position in SNP_avoid_range:
+    for position,snip in SNP_avoid_range.items():
         if position >= forward_start and position <= (forward_start + len(forward)):
-            SNPs_FWD.append(position)
+            SNPs_FWD[position] = snip
     for position in sec_str_avoid_range:
         if position >= forward_start and position <= (forward_start + len(forward)):
             sec_FWD.append(position)
-    if SNPs_FWD == []:
+    if not SNPs_FWD:
         SNPs_FWD = "No SNPs found"
     if sec_FWD == []:
         sec_FWD = "No secondary structures found"
     # check the reverse primer
     positions_REV = range(reverse_end+1 - len(reverse), reverse_end)
-    SNPs_REV = []
+    SNPs_REV = {}
     sec_REV = []
-    for position in SNP_avoid_range:
+    for position,snip in SNP_avoid_range.items():
         if position >= reverse_end+1 - len(reverse) and position <= reverse_end:
-            SNPs_REV.append(position)
+            SNPs_REV[position] = snip
     for position in sec_str_avoid_range:
         if position >= reverse_end+1 - len(reverse) and position <= reverse_end:
             sec_REV.append(position)
-    if SNPs_REV == []:
-        SNPs_REV = "No SNPs found"
+    if not SNPs_REV:
+        SNPs_REV = "0 found"
     if sec_REV == []:
-        sec_REV = "No secondary structures found"
+        sec_REV = "0 predicted"
     return SNPs_FWD, sec_FWD, SNPs_REV, sec_REV
 
 # open the table file
