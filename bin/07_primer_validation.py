@@ -142,7 +142,7 @@ for line in template_file:
 # append the common priemers to the line and write the new line to the file
 with open(file_output,'w') as output:
     # Header line
-    output.write("Name\tSpecific_primer\tMatch_Tm\tSingle_MM_Tm\tDouble_MM_Tm\tMM_delta\tGC%\tLenght\tCommon_primer\tMatch_Tm\tGC%\tLength\tFWD_validation\tREV_validation\n")
+    output.write("Name\tSpecific_primer\tMatch_Tm\tSingle_MM_Tm\tDouble_MM_Tm\tMM_delta\tGC%\tLenght\tCommon_primer\tMatch_Tm_common\tGC%_common\tLength\tFWD_validation\tREV_validation\n")
     for line in lines:
         # Forward primers
         if "_F_WT" in line:
@@ -354,7 +354,7 @@ with open(file_output, 'r') as table:
 with open(file_output, 'w') as output:
     # Header line
 # Header line
-    output.write("Name\tSpecific_primer\tMatch_Tm\tSingle_MM_Tm\tDouble_MM_Tm\tMM_delta\tGC%\tLenght\tCommon_primer\tMatch_Tm\tGC%\tLength\tFWD_validation\tREV_validation\tSNPs_FWD\tSec_str_FWD\tSNPs_REV\tSec_str_REV\tAmplicon\n")    
+    output.write("Name\tSpecific_primer\tMatch_Tm\tSingle_MM_Tm\tDouble_MM_Tm\tMM_delta\tGC%\tLenght\tCommon_primer\tMatch_Tm_common\tGC%_common\tLength_common\tFWD_validation\tREV_validation\tSNPs_FWD\tSec_str_FWD\tSNPs_REV\tSec_str_REV\tAmplicon\tAmp_length\n")    
     for line in lines:
         line = line.rstrip().split("\t")
         # check FWD WT 
@@ -368,7 +368,7 @@ with open(file_output, 'w') as output:
             # cross-reference the positions
             SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
             # write the line to the output file
-            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\n")
+            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
         # check REV WT
         if "R_WT" in line[0]:
             # get the amplicon and primer positions
@@ -380,7 +380,7 @@ with open(file_output, 'w') as output:
             # cross-reference the positions
             SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
             # write the line to the output file
-            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\n")
+            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
         # check FWD MUT
         if "F_MUT" in line[0]:
             # get the amplicon and primer positions
@@ -392,7 +392,7 @@ with open(file_output, 'w') as output:
             # cross-reference the positions
             SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
             # write the line to the output file
-            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\n")
+            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
         # check REV MUT
         if "R_MUT" in line[0]:
             # get the amplicon and primer positions
@@ -404,7 +404,7 @@ with open(file_output, 'w') as output:
             # cross-reference the positions
             SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
             # write the line to the output file
-            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\n")
+            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
 table.close()
 output.close()
 
@@ -413,6 +413,6 @@ output.close()
 ####################################################################################################
 
 df = pd.read_csv(file_output, sep='\t')
-new_order = ["Name","Specific_primer","Match_Tm","Single_MM_Tm","Double_MM_Tm","MM_delta","GC%","Lenght","Common_primer","Match_Tm","GC%","Length","SNPs_FWD","Sec_str_FWD","SNPs_REV","Sec_str_REV","FWD_validation","REV_validation","Amplicon"]
+new_order = ["Name","Specific_primer","Match_Tm","Single_MM_Tm","Double_MM_Tm","MM_delta","GC%","Lenght","Common_primer","Match_Tm_common","GC%_common","Length_common","SNPs_FWD","Sec_str_FWD","SNPs_REV","Sec_str_REV","FWD_validation","REV_validation","Amplicon","Amp_length"]
 df = df[new_order]
 df.to_csv(file_output, sep='\t', index=False)
