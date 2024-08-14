@@ -73,7 +73,7 @@ output_wt.close()
 
 ## Mutant
 output_mut = open("sec-str_" + seq_ID + '_mut'+ ".txt", "a")
-output_mut.write( seq_ID + '_var-wt'+ '\t' + MUT_structure + "\t" + str(MUT_delta_g) + "\t")
+output_mut.write( seq_ID + '_var-mut'+ '\t' + MUT_structure + "\t" + str(MUT_delta_g) + "\t")
 # Which positions have secondary structures?
 str_not_ok = []
 # if seq has secondary structures ("(" or ")"), retrieve the positions and add it to a list
