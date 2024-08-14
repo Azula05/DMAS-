@@ -33,19 +33,24 @@ with open(input_file, 'w') as output:
         else:
             ### Get the amplicon
             line = line.rstrip().split('\t')
-            amplicon = line[19]
-            ### Run viennaRNA
-            command = "echo " + amplicon +"| RNAfold -p --noconv -T 60.0 -P DNA --salt 0.05"
-            process = os.popen(command)
-            output2 = process.read()
-            process.close()
-            arguments = output2.split("\n")
-            ### Get the MFE proxy structures
-            structure = str(arguments[3].split(" ")[0])
-            ### Get the delta G
-            delta_g = arguments[2].split(" ",1)[1]
-            delta_g = delta_g.replace("[","").replace("]","").strip()
-            output.write("\t".join(line) + "\t" + structure + "\t" + delta_g + "\n")
+            try:
+                amplicon = line[19]
+                ### Run viennaRNA
+                command = "echo " + amplicon +"| RNAfold -p --noconv -T 60.0 -P DNA --salt 0.05"
+                process = os.popen(command)
+                output2 = process.read()
+                process.close()
+                arguments = output2.split("\n")
+                ### Get the MFE proxy structures
+                structure = str(arguments[3].split(" ")[0])
+                ### Get the delta G
+                delta_g = arguments[2].split(" ",1)[1]
+                delta_g = delta_g.replace("[","").replace("]","").strip()
+                output.write("\t".join(line) + "\t" + structure + "\t" + delta_g + "\n")
+            except:
+                structure = "NA"
+                delta_g = "NA"
+                output.write("\t".join(line) + "\t" + structure + "\t" + delta_g + "\n")
         line_nr += 1
 
 
