@@ -78,8 +78,14 @@ for i in range(0, 21): # 1-20
         common_FWD = primer
         common_TM = tm
         common_GC = gc
+    # back-up primer
+    elif num == 1:
+        common_FWD_1 = primer
+        common_TM_1 = tm
+        common_GC_1 = gc
+        alternatives.write(ID + "_common_F_" + str(num) + "\t" + primer + "\t" + tm + "\t" + gc + "\n")
     # The other primers are alternatives and will be written to the alternatives
-    elif num != 0:
+    elif num > 1:
         alternatives.write(ID + "_common_F_" + str(num) + "\t" + primer + "\t" + tm + "\t" + gc + "\n")
 Forward.close()
 
@@ -110,8 +116,13 @@ for i in range(0, 21):
         common_REV = primer
         common_TM_REV = tm
         common_GC_REV = gc
+    elif num == 1:
+        common_REV_1 = primer
+        common_TM_REV_1 = tm
+        common_GC_REV_1 = gc
+        alternatives.write(ID + "_common_R_" + str(num) + "\t" + primer + "\t" + tm + "\t" + gc + "\n")
     # The other primers are alternatives and will be written to the alternatives
-    elif num != 0:
+    elif num > 1:
         alternatives.write(ID + "_common_R_" + str(num) + "\t" + primer + "\t" + tm + "\t" + gc + "\n")
 # close the files
 Forward.close()
@@ -215,8 +226,23 @@ with open(file_output,'w') as output:
                 line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + left_validation + "\t" + right_validation + "\n"
                 output.write(line)
             except:
-                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
-                output.write(line)
+                # try backup primer
+                try:
+                    back_up_F_WT = "yes"
+                    command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template + "\nSEQUENCE_PRIMER=" + forward + "\nSEQUENCE_PRIMER_REVCOMP=" + common_REV_1 + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
+                    process = os.popen("echo \"" + command + "\" | primer3_core -p3_settings_file=" + primer3_settings)            
+                    validation = process.read()
+                    process.close()  # Ensure proper resource management
+                    # Extract stdout from the command
+                    arguments = validation.split("\n")
+                    left_validation = arguments[10].split("=")[1]
+                    right_validation = arguments[11].split("=")[1]
+                    # change the line
+                    line = line.rstrip() + "\t" + common_REV_1 + "\t" + common_TM_REV_1 + "\t" + common_GC_REV_1 + "\t" + str(len(common_REV_1)) + "\t" + left_validation + "\t" + right_validation + "\n"
+                    output.write(line)
+                except:
+                    line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
+                    output.write(line)
 
         if "_F_MUT" in line:
             # validate the primers
@@ -240,8 +266,22 @@ with open(file_output,'w') as output:
                 line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + left_validation + "\t" + right_validation + "\n"
                 output.write(line)
             except:
-                line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
-                output.write(line)
+                try:
+                    back_up_F_MUT = "yes"
+                    command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template_MUT + "\nSEQUENCE_PRIMER=" + forward + "\nSEQUENCE_PRIMER_REVCOMP=" + common_REV_1 + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
+                    process = os.popen("echo \"" + command + "\" | primer3_core -p3_settings_file=" + primer3_settings)            
+                    validation = process.read()
+                    process.close()  # Ensure proper resource management
+                    # Extract stdout from the command
+                    arguments = validation.split("\n")
+                    left_validation = arguments[10].split("=")[1]
+                    right_validation = arguments[11].split("=")[1]
+                    # change the line
+                    line = line.rstrip() + "\t" + common_REV_1 + "\t" + common_TM_REV_1 + "\t" + common_GC_REV_1 + "\t" + str(len(common_REV_1)) + "\t" + left_validation + "\t" + right_validation + "\n"
+                    output.write(line)
+                except:
+                    line = line.rstrip() + "\t" + common_REV + "\t" + common_TM_REV + "\t" + common_GC_REV + "\t" + str(len(common_REV)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
+                    output.write(line)
   
         # Reverse primers
         if "_R_WT" in line:
@@ -266,8 +306,22 @@ with open(file_output,'w') as output:
                 line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD)) + "\t" + left_validation + "\t" + right_validation + "\n"
                 output.write(line)
             except:
-                line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
-                output.write(line)
+                try:
+                    back_up_R_WT = "yes"
+                    command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template + "\nSEQUENCE_PRIMER=" + common_FWD_1 + "\nSEQUENCE_PRIMER_REVCOMP=" + reverse + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
+                    process = os.popen("echo \"" + command + "\" | primer3_core -p3_settings_file=" + primer3_settings)            
+                    validation = process.read()
+                    process.close()  # Ensure proper resource management
+                    # Extract stdout from the command
+                    arguments = validation.split("\n")
+                    left_validation = arguments[10].split("=")[1]
+                    right_validation = arguments[11].split("=")[1]
+                    # change the line
+                    line = line.rstrip() + "\t" + common_FWD_1 + "\t" + common_TM_1 + "\t" + common_GC_1 + "\t" + str(len(common_FWD_1)) + "\t" + left_validation + "\t" + right_validation + "\n"
+                    output.write(line)
+                except:
+                    line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD)) + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
+                    output.write(line)
         if "_R_MUT" in line:
             # validate the primers
             line_list = line.split("\t")
@@ -290,8 +344,22 @@ with open(file_output,'w') as output:
                 line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD)) + "\t" + left_validation + "\t" + right_validation + "\n"
                 output.write(line)
             except:
-                line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD))  + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
-                output.write(line)
+                try:
+                    back_up_R_MUT = "yes"
+                    command = "SEQUENCE_ID=" + name + "\nSEQUENCE_TEMPLATE=" + template_MUT + "\nSEQUENCE_PRIMER=" + common_FWD_1 + "\nSEQUENCE_PRIMER_REVCOMP=" + reverse + "\nPRIMER_TASK=check_primers" + "\nPRIMER_EXPLAIN_FLAG=1 \nPRIMER_MIN_TM=45 \nPRIMER_MAX_TM=63 \nPRIMER_MIN_SIZE=16 \nPRIMER_MAX_SIZE=36 \n="
+                    process = os.popen("echo \"" + command + "\" | primer3_core -p3_settings_file=" + primer3_settings)            
+                    validation = process.read()
+                    process.close()  # Ensure proper resource management
+                    # Extract stdout from the command
+                    arguments = validation.split("\n")
+                    left_validation = arguments[10].split("=")[1]
+                    right_validation = arguments[11].split("=")[1]
+                    # change the line
+                    line = line.rstrip() + "\t" + common_FWD_1 + "\t" + common_TM_1 + "\t" + common_GC_1 + "\t" + str(len(common_FWD_1)) + "\t" + left_validation + "\t" + right_validation + "\n"
+                    output.write(line)
+                except:
+                    line = line.rstrip() + "\t" + common_FWD + "\t" + common_TM + "\t" + common_GC + "\t" + str(len(common_FWD))  + "\t" + "primer3 failed to validate primers" + "\t" + "primer3 failed to validate primers"+ "\n"
+                    output.write(line)
 output.close()
 table.close()
 
