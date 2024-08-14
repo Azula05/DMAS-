@@ -9,13 +9,11 @@ import re
 
 # get the arguments
 parser = argparse.ArgumentParser(description="give arguments to filter script")
-parser.add_argument('-f', nargs=1, required=True, help="stringency of filtering primer specificity: strict, loose or off")
 parser.add_argument('-i', nargs=1, required=True, help="input tsv file with the primers table")
 # parser.add_argument('-t', nargs=1, required=True, help="number of threads to use") cannot be used in nextflow with parallel processes (will ask for too many threads)
 parser.add_argument('-b', nargs=1, required=True, help="path to the bowtie2 index")
 
 args = parser.parse_args()
-spec_filter = args.f[0]
 primers_file = args.i[0]
 # threads = args.t[0]
 bowtie2_index = args.b[0]
@@ -87,7 +85,7 @@ temp = open("specificity.txt", "w")
 
 
 
-"""
+
 ################################################################################################
 ###################################   Bowtie2   ################################################
 ################################################################################################
@@ -98,15 +96,17 @@ i = 0
 for name, primer_pair in primers.items():
 	input_line = ">" + name + "_forward" + "\n" + primer_pair[0] + "\n" + ">" + name + "_reverse" + "\n" + primer_pair[1]
 # echo -e ">primer1_forward\nACTGACTGACTGACTG\n>primer1_reverse\nTGACTGACTGACTGACT" | bowtie2 --threads 2 --no-hd --xeq --no-sq --quiet -x ./Assets/GRCh38/Index_bowtie/GRCh38_noalt_as -f - --very-sensitive -N 1
-	# "echo \"" + input_line +"\" | bowtie2 --no-hd --xeq --no-sq --quiet -x " + bowtie2_index +" -f - --very-sensitive -N 1 --threads "
-	command = "echo \"" + input_line +"\" | bowtie2 --no-hd --xeq --no-sq --quiet -x " + bowtie2_index +" --very-sensitive -X 1000 -f - --no-unal --threads 3"
+	# bowtie2 --no-hd --xeq --no-sq -X 1000 -N 1 --mp 1,1 --quiet -x " + bowtie2_index +" -X1000 --very-sensitive -f - --threads 3
+	# bowtie --tryhard -X1000 -v3 --quiet -x " + bowtie1_index + " --quiet --threads 3 -f -
+	command = "echo \"" + input_line +"\" | bowtie2 --no-hd --xeq --no-sq -X 1000 -N 1 --mp 1,1 --quiet -x " + bowtie2_index +" -X1000 --very-sensitive -f - --threads 3"
 	print(i)
+	temp.write(str(i)+"\n")
 	process = os.popen(command)
 	output = process.read()
 	process.close()  # Ensure proper resource management
 	# Extract stdout from the command
 	arguments = output.split("\n")
-	print(arguments)
+	temp.write(str(arguments)+"\n")
 	# USE RE WILL NOT WORK LIKE THIS
 	#specificity[name] = arguments[0].split("\t")[2], arguments[0].split("\t")[3], arguments[0].split("\t")[5], arguments[0].split("\t")[17].split(":")[2] ,arguments[1].split("\t")[2], arguments[1].split("\t")[3], arguments[1].split("\t")[5], arguments[1].split("\t")[17].split(":")[2]
 	#print(specificity)
@@ -115,9 +115,9 @@ for name, primer_pair in primers.items():
 	i += 1
 
 ## ADD CPUS AAND MAKE  SURE IIIIIT IS NOT PARAALLEL AAND USES AALL
+
+
 """
-
-
 ################################################################################################
 ###################################   Bowtie1   ################################################
 ################################################################################################
@@ -135,12 +135,13 @@ for name, primer_pair in primers.items():
 	process.close()  # Ensure proper resource management
 	# Extract stdout from the command
 	arguments = output.split("\n")
-	temp.write(str(arguments))
+	temp.write(str(arguments)+"\n")
 	# USE RE WILL NOT WORK LIKE THIS
 	#specificity[name] = arguments[0].split("\t")[2], arguments[0].split("\t")[3], arguments[0].split("\t")[5], arguments[0].split("\t")[17].split(":")[2] ,arguments[1].split("\t")[2], arguments[1].split("\t")[3], arguments[1].split("\t")[5], arguments[1].split("\t")[17].split(":")[2]
 	#print(specificity)
 	i += 1
 temp.close()
+"""
 """
 ################################################################################################
 ###################################   columba   ################################################
