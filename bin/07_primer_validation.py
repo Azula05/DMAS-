@@ -19,7 +19,8 @@ parser.add_argument("-F", nargs=1, required=True, help="file with the forward co
 parser.add_argument("-R", nargs=1, required=True, help="file with the reverse common primers output")
 parser.add_argument("-T", nargs=1, required=True, help="file with the template sequence; input file")
 parser.add_argument("-s", nargs=1, required=True, help="file with the SNP information")
-parser.add_argument("-u", nargs=1, required=True, help="file with the secondary structure information")
+parser.add_argument("-u", nargs=1, required=True, help="file with the secondary structure information for the wild type")
+parser.add_argument("-U", nargs=1, required=True, help="file with the secondary structure information for the mutant")
 parser.add_argument("-o", nargs=1, required=True, help="tsv file with the primer information")
 parser.add_argument("-p", nargs=1, required=True, help="file with the primer3 settings")
 parser.add_argument("-q", nargs=1, required=True, help="upfront checks: yes, snp, str, no")
@@ -30,7 +31,8 @@ file_forward = args.F[0]
 file_reverse = args.R[0]
 file_template = args.T[0]
 file_snps = args.s[0]
-file_structures = args.u[0]
+file_structures_wt = args.u[0]
+file_structures_mut = args.U[0]
 file_output = args.o[0]
 primer3_settings= args.p[0]
 # get the ID from the file
@@ -39,7 +41,6 @@ ID = ID.split("/")[-1]
 # upfront check
 checks = args.q[0]
 SNP_avoid_range = {}
-sec_str_avoid_range = []
 ####################################################################################################
 ##############################   Add common primers to the table   #################################
 ####################################################################################################
@@ -121,7 +122,7 @@ Reverse.close()
 ######################################   Validate primers   ########################################
 ####################################################################################################
 
-def template_adaptation_left(left, right, name):
+def template_adaptation(left, right, name):
     change = name.split("_")[1]
     if change == "2A":
         num = 2
@@ -197,7 +198,7 @@ with open(file_output,'w') as output:
             # validate the primers
             line_list = line.split("\t")
             name = line_list[0]
-            changed_L, changed_R = template_adaptation_left(left, right ,name)
+            changed_L, changed_R = template_adaptation(left, right ,name)
             template = changed_L + wt + right
             forward = line_list[1]
             # validation
@@ -222,7 +223,7 @@ with open(file_output,'w') as output:
             line_list = line.split("\t")
             name = line_list[0]
             ## needs to be an exact match
-            changed_L, changed_R = template_adaptation_left(left, right ,name)
+            changed_L, changed_R = template_adaptation(left, right ,name)
             template_MUT = changed_L + m + right
             forward = line_list[1]
             # validation
@@ -248,7 +249,7 @@ with open(file_output,'w') as output:
             line_list = line.split("\t")
             name = line_list[0]
             ## needs to be an exact match
-            changed_L, changed_R = template_adaptation_left(left, right ,name)
+            changed_L, changed_R = template_adaptation(left, right ,name)
             template = left + wt + changed_R
             reverse = line_list[1]
             # validation
@@ -272,7 +273,7 @@ with open(file_output,'w') as output:
             line_list = line.split("\t")
             name = line_list[0]
             ## needs to be an exact match
-            changed_L, changed_R = template_adaptation_left(left, right ,name)
+            changed_L, changed_R = template_adaptation(left, right ,name)
             template_MUT = left + m + changed_R
             reverse = line_list[1]
             # validation
@@ -322,22 +323,23 @@ if checks == "yes" or checks =="YES" or checks == "snp" or checks == "SNP":
 ####################################################################################################
 if checks == "yes" or checks =="YES" or checks == "str" or checks == "STR":
     # open the secondary structure file
-    sec_str = open(args.u[0])
+    sec_str_wt = open(args.u[0])
+    sec_str_mut = open(args.U[0])
     # loop all the secondary structures that where found
-    for line in sec_str:
+    for line in sec_str_wt:
         # if the line is not empty
         if line != "":
             line = line.split("\t")
-            structure = line[1]
-        # make a list with the positions to avoid
-        i = 0
-        for char in list(structure):
-            if char == "(":
-                sec_str_avoid_range.append(i)
-            elif char == ")":
-                sec_str_avoid_range.append(i)
-            i += 1
-    sec_str.close()
+            deltaG_wt = line[2].replace("[", "").replace("]", "")
+            sec_str_avoid_range_wt=line[3]
+    sec_str_wt.close()
+    for line in sec_str_mut:
+        # if the line is not empty
+        if line != "":
+            line = line.split("\t")
+            deltaG_mut = line[2].replace("[", "").replace("]", "")
+            sec_str_avoid_range_mut=line[3]
+    sec_str_mut.close()
 
 ####################################################################################################
 #################################   Add amplicon and postions found  ###############################
@@ -368,24 +370,25 @@ def check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_
     sec_FWD = []
     for position,snip in SNP_avoid_range.items():
         if position >= forward_start and position <= (forward_start + len(forward)):
-            SNPs_FWD[position] = snip
-    for position in sec_str_avoid_range:
+            SNPs_FWD[position-position_of_interest] = snip
+    for position in sec_str_avoid_range.replace("[", "").replace("]", "").split(","):
+        position = int(position)
         if position >= forward_start and position <= (forward_start + len(forward)):
-            sec_FWD.append(position)
+            sec_FWD.append(position-position_of_interest)
     if not SNPs_FWD:
         SNPs_FWD = "0 found"
     if sec_FWD == []:
         sec_FWD = "0 predicted"
     # check the reverse primer
-    positions_REV = range(reverse_end+1 - len(reverse), reverse_end)
     SNPs_REV = {}
     sec_REV = []
     for position,snip in SNP_avoid_range.items():
         if position >= reverse_end+1 - len(reverse) and position <= reverse_end:
-            SNPs_REV[position] = snip
-    for position in sec_str_avoid_range:
+            SNPs_REV[position-reverse_end] = snip
+    for position in sec_str_avoid_range.replace("[", "").replace("]", "").split(","):
+        position = int(position)
         if position >= reverse_end+1 - len(reverse) and position <= reverse_end:
-            sec_REV.append(position)
+            sec_REV.append(position-reverse_end)
     if not SNPs_REV:
         SNPs_REV = "0 found"
     if sec_REV == []:
@@ -398,57 +401,58 @@ with open(file_output, 'r') as table:
 with open(file_output, 'w') as output:
     # Header line
 # Header line
-    output.write("Name\tSpecific_primer\tMatch_Tm\tSingle_MM_Tm\tDouble_MM_Tm\tMM_delta\tGC%\tLenght\tCommon_primer\tMatch_Tm_common\tGC%_common\tLength_common\tFWD_validation\tREV_validation\tSNPs_FWD\tSec_str_FWD\tSNPs_REV\tSec_str_REV\tAmplicon\tAmp_length\n")    
+    output.write("Name\tSpecific_primer\tMatch_Tm\tSingle_MM_Tm\tDouble_MM_Tm\tMM_delta\tGC%\tLenght\tCommon_primer\tMatch_Tm_common\tGC%_common\tLength_common\tFWD_validation\tREV_validation\tSNPs_FWD\tSec_str_FWD\tSNPs_REV\tSec_str_REV\tDeltaG\tAmplicon\tAmp_length\n")    
     for line in lines:
         line = line.rstrip().split("\t")
         # check FWD WT 
-        if "F_WT" in line[0]:
+        if "_F_WT" in line[0]:
             # get the amplicon and primer positions
-            template = left + wt + right
-            forward = left + wt
-            forward = forward[-len(line[1]):]
+            changed_L, changed_R = template_adaptation(left, right ,line[0])
+            template = changed_L + wt + right
+            forward = line[1]
             reverse = line[8]
             amplicon, forward_start, reverse_end = get_amplicon(template, forward, reverse) #0-based
             # cross-reference the positions
-            SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
+            SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range_wt)
             # write the line to the output file
-            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
+            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(deltaG_wt) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
+
         # check REV WT
-        if "R_WT" in line[0]:
+        if "_R_WT" in line[0]:
             # get the amplicon and primer positions
-            template = left + wt + right
+            changed_L, changed_R = template_adaptation(left, right ,line[0])
+            template = left + wt + changed_R
             forward = line[8]
-            reverse = wt + right
-            reverse = str(Seq(reverse[0:len(line[1])]).reverse_complement())
+            reverse = line[1]
             amplicon, forward_start, reverse_end = get_amplicon(template, forward, reverse) #0-based
             # cross-reference the positions
-            SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
+            SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range_wt)
             # write the line to the output file
-            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
+            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(deltaG_wt) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
         # check FWD MUT
-        if "F_MUT" in line[0]:
+        if "_F_MUT" in line[0]:
             # get the amplicon and primer positions
-            template_MUT = left + m + right
-            forward = left + m
-            forward = forward[-len(line[1]):]
+            changed_L, changed_R = template_adaptation(left, right ,line[0])
+            template_MUT = changed_L + m + right
+            forward = line[1]
             reverse = line[8]
             amplicon, forward_start, reverse_end = get_amplicon(template_MUT, forward, reverse) #0-based
             # cross-reference the positions
-            SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
+            SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range_mut)
             # write the line to the output file
-            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
+            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(deltaG_mut) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
         # check REV MUT
         if "R_MUT" in line[0]:
             # get the amplicon and primer positions
-            template_MUT = left + m + right
+            changed_L, changed_R = template_adaptation(left, right ,line[0])
+            template_MUT = left + m + changed_R
             forward = line[8]
-            reverse = m + right
-            reverse = str(Seq(reverse[0:len(line[1])]).reverse_complement())
+            reverse = line[1]
             amplicon, forward_start, reverse_end = get_amplicon(template_MUT, forward, reverse) #0-based
             # cross-reference the positions
-            SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range)
+            SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range_mut)
             # write the line to the output file
-            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
+            output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(deltaG_mut)  + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
 table.close()
 output.close()
 
@@ -457,6 +461,6 @@ output.close()
 ####################################################################################################
 
 df = pd.read_csv(file_output, sep='\t')
-new_order = ["Name","Specific_primer","Match_Tm","Single_MM_Tm","Double_MM_Tm","MM_delta","GC%","Lenght","Common_primer","Match_Tm_common","GC%_common","Length_common","SNPs_FWD","Sec_str_FWD","SNPs_REV","Sec_str_REV","FWD_validation","REV_validation","Amplicon","Amp_length"]
+new_order = ["Name","Specific_primer","Match_Tm","Single_MM_Tm","Double_MM_Tm","MM_delta","GC%","Lenght","Common_primer","Match_Tm_common","GC%_common","Length_common","SNPs_FWD","Sec_str_FWD","SNPs_REV","Sec_str_REV","DeltaG","FWD_validation","REV_validation","Amplicon","Amp_length"]
 df = df[new_order]
 df.to_csv(file_output, sep='\t', index=False)
