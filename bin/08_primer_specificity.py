@@ -1,68 +1,169 @@
 #!/usr/bin/env python3
-
+"""
+This script will check the primers and their specificity to the reference genome.
+It will output the results to a new column in the output table.
+"""
 import argparse
-import re
 import os
+import re
 
-
+# get the arguments
 parser = argparse.ArgumentParser(description="give arguments to filter script")
-parser.add_argument('-f', nargs=1, required=True, help="stringency of filtering primer specificity")
+parser.add_argument('-f', nargs=1, required=True, help="stringency of filtering primer specificity: strict, loose or off")
+parser.add_argument('-i', nargs=1, required=True, help="input tsv file with the primers table")
+# parser.add_argument('-t', nargs=1, required=True, help="number of threads to use") cannot be used in nextflow with parallel processes (will ask for too many threads)
+parser.add_argument('-b', nargs=1, required=True, help="path to the bowtie2 index")
 
 args = parser.parse_args()
 spec_filter = args.f[0]
+primers_file = args.i[0]
+# threads = args.t[0]
+bowtie2_index = args.b[0]
+bowtie1_index = args.b[0]
+columba_index = args.b[0]
 
-# this script summarises the SAM output file to give a PASS or FAIL for each primer pair
+####################################################################################################
+#################################    A. specificity filter  ########################################
+####################################################################################################
 
-spec_file = open('out-primer-spec_all.sam')
+# rules from https://academic.oup.com/clinchem/article/59/10/1470/5622018?login=true fig 6 are used as filter criteria
+# The criteria are:
 
-all_lines = []
+# Strict: 
+# - no mismatches in either primer = off-target and is discarted
+# - primers with at least 4 mismatches for a single primer = no off-target and is kept
+# - primers with a total of at least 5 mismatches between both primers = no off-target and is kept
 
-for line in spec_file:
-	all_lines.append(line)
+# Loose:
+# - primers with at least 3 mismatches for a single primer = no off-target and is kept
+# - primers with a total of at least 4 mismatches between both primers = no off-target and is kept
 
-spec_file.close()
+# MM primer1	MM primer2	sum MM	loose			strict
+# 0				0			0		off-target		off-target
+# 1				0			1		off-target		off-target
+# 0				1			1		off-target		off-target
+# 2				0			2		off-target		off-target
+# 0				2			2		off-target		off-target
+# 1				1			2		off-target		off-target
+# 2				1			3		off-target		off-target
+# 1				2			3		off-target		off-target
+# 3				0			3		no off-target	off-target
+# 0				3			3		no off-target	off-target
+# 1				3			4		no off-target	off-target
+# 3				1			4		no off-target	off-target
+# 2				2			4		no off-target	off-target
+# 4				0			4		no off-target	no off-target
+# 0				4			4		no off-target	no off-target
+# 2				3			5		no off-target	no off-target
+# 3				2			5		no off-target	no off-target
+# 4				1			5		no off-target	no off-target
+# 1				4			5		no off-target	no off-target
+# 3				3			6		no off-target	no off-target
+
+# open the primer file
+primers_file = open(primers_file,'r')
+
+# create a dictionary with the primers
+primers={}
+line_nr = 0
+for line in primers_file:
+	line = line.strip().split('\t')
+	## Ignore the header
+	if line_nr == 0:
+		line_nr += 1
+		continue
+	## first one should be the forward primer and the second one the reverse primer
+	elif "_F_" in line[0]:
+		primers[line[0]] = line[1], line[8]
+	elif "_R_" in line[0]:
+		primers[line[0]] = line[8], line[1]
+
+primers_file.close()
 
 
-fail_spec_file = open('fail-spec_all.txt', 'w')
 
 
-# rules from https://academic.oup.com/clinchem/article/59/10/1470/5622018?login=true fig 6
-for line_nr in range(0, len(all_lines) - 1, 2):
-	seq_ID = all_lines[line_nr].split()[0].split('_')[0]
-	templ_ID = all_lines[line_nr].split()[0].split('_')[1]
-	primer_ID = all_lines[line_nr].split()[0].split('_')[2]
+temp = open("specificity.txt", "w")
 
-	fwd_spec = all_lines[line_nr].split()
-	rev_spec = all_lines[line_nr+1].split()
 
-	# get info about that seq ID
-	seq_file = open(seq_ID + ".txt").readline().strip()
-	seq, seq_pos, SNP_pos = seq_file.split('\t')
-	chrom, start, end = seq_pos.replace(":", "-").split("-")
 
-	# check if matches are region of interest
-	if fwd_spec[2] == chrom and int(fwd_spec[3]) - 1 <= int(end) and int(fwd_spec[3]) - 1 >= int(start):
-		continue										# when the chromosome in the specificity file is the same one as in the primer file and its forward position falls between sequence positions: continue
-	if rev_spec[2] == chrom and int(rev_spec[3]) - 1 <= int(end) and int(rev_spec[3]) - 1 >= int(start):
-		continue										# when the chromosome in the specificity file is the same one as in the primer file and its reverse position falls between sequence positions: continue
+"""
+################################################################################################
+###################################   Bowtie2   ################################################
+################################################################################################
 
-	else:
-		fwd_MM, rev_MM = 0, 0
+# Go through the dictionary and check the specificity of the primers
+specificity = {}
+i = 0
+for name, primer_pair in primers.items():
+	input_line = ">" + name + "_forward" + "\n" + primer_pair[0] + "\n" + ">" + name + "_reverse" + "\n" + primer_pair[1]
+# echo -e ">primer1_forward\nACTGACTGACTGACTG\n>primer1_reverse\nTGACTGACTGACTGACT" | bowtie2 --threads 2 --no-hd --xeq --no-sq --quiet -x ./Assets/GRCh38/Index_bowtie/GRCh38_noalt_as -f - --very-sensitive -N 1
+	# "echo \"" + input_line +"\" | bowtie2 --no-hd --xeq --no-sq --quiet -x " + bowtie2_index +" -f - --very-sensitive -N 1 --threads "
+	command = "echo \"" + input_line +"\" | bowtie2 --no-hd --xeq --no-sq --quiet -x " + bowtie2_index +" --very-sensitive -X 1000 -f - --no-unal --threads 3"
+	print(i)
+	process = os.popen(command)
+	output = process.read()
+	process.close()  # Ensure proper resource management
+	# Extract stdout from the command
+	arguments = output.split("\n")
+	print(arguments)
+	# USE RE WILL NOT WORK LIKE THIS
+	#specificity[name] = arguments[0].split("\t")[2], arguments[0].split("\t")[3], arguments[0].split("\t")[5], arguments[0].split("\t")[17].split(":")[2] ,arguments[1].split("\t")[2], arguments[1].split("\t")[3], arguments[1].split("\t")[5], arguments[1].split("\t")[17].split(":")[2]
+	#print(specificity)
+	#if i == 6:
+		#exit("break")
+	i += 1
 
-		if len(fwd_spec) > 7:
-			fwd_MM = fwd_spec[7].count('>')
+## ADD CPUS AAND MAKE  SURE IIIIIT IS NOT PARAALLEL AAND USES AALL
+"""
 
-		if len(rev_spec) > 7:
-			rev_MM = rev_spec[7].count('>')
 
-		if fwd_MM > 0 or rev_MM > 0:
-			if spec_filter == 'strict':
-				if fwd_MM + rev_MM < 5:
-					fail_spec_file.write(seq_ID + '_' + templ_ID + '_' + primer_ID + '\n')
-			if spec_filter == 'loose':
-				if (fwd_MM + rev_MM < 3) or (fwd_MM == 1 & rev_MM == 2) or (fwd_MM == 2 & rev_MM == 1):
-					fail_spec_file.write(seq_ID + '_' + templ_ID + '_' + primer_ID + '\n')
-		else:
-			fail_spec_file.write(seq_ID + '_' + templ_ID + '_' + primer_ID + '\n')
+################################################################################################
+###################################   Bowtie1   ################################################
+################################################################################################
+specificity = {}
+i = 0
+for name, primer_pair in primers.items():
+	input_line = ">" + name + "_forward" + "\n" + primer_pair[0] + "\n" + ">" + name + "_reverse" + "\n" + primer_pair[1]
+# echo -e ">primer1_forward\nACTGACTGACTGACTG\n>primer1_reverse\nTGACTGACTGACTGACT" | bowtie2 --threads 2 --no-hd --xeq --no-sq --quiet -x ./Assets/GRCh38/Index_bowtie/GRCh38_noalt_as -f - --very-sensitive -N 1
+	# "echo \"" + input_line +"\" | bowtie2 --no-hd --xeq --no-sq --quiet -x " + bowtie2_index +" -f - --very-sensitive -N 1"
+	command = "echo \"" + input_line +"\" | bowtie --tryhard -X1000 -v3 --quiet -x " + bowtie1_index + " --quiet --threads 3 -f -"
+	print(i)
+	temp.write(str(i))
+	process = os.popen(command)
+	output = process.read()
+	process.close()  # Ensure proper resource management
+	# Extract stdout from the command
+	arguments = output.split("\n")
+	temp.write(str(arguments))
+	# USE RE WILL NOT WORK LIKE THIS
+	#specificity[name] = arguments[0].split("\t")[2], arguments[0].split("\t")[3], arguments[0].split("\t")[5], arguments[0].split("\t")[17].split(":")[2] ,arguments[1].split("\t")[2], arguments[1].split("\t")[3], arguments[1].split("\t")[5], arguments[1].split("\t")[17].split(":")[2]
+	#print(specificity)
+	i += 1
+temp.close()
+"""
+################################################################################################
+###################################   columba   ################################################
+################################################################################################
 
-fail_spec_file.close()
+specificity = {}
+i = 0
+for name, primer_pair in primers.items():
+	input_line = ">" + name + "_forward" + "\n" + primer_pair[0] + "\n" + ">" + name + "_reverse" + "\n" + primer_pair[1]
+# echo -e ">primer1_forward\nACTGACTGACTGACTG\n>primer1_reverse\nTGACTGACTGACTGACT" | bowtie2 --threads 2 --no-hd --xeq --no-sq --quiet -x ./Assets/GRCh38/Index_bowtie/GRCh38_noalt_as -f - --very-sensitive -N 1
+	# "echo \"" + input_line +"\" | bowtie2 --no-hd --xeq --no-sq --quiet -x " + bowtie2_index +" -f - --very-sensitive -N 1"
+	command = "echo \"" + input_line +"\" | columba primer_search --primers - --targets genome.fasta"
+	print(i)
+	process = os.popen(command)
+	output = process.read()
+	process.close()  # Ensure proper resource management
+	# Extract stdout from the command
+	arguments = output.split("\n")
+	print(arguments)
+	# USE RE WILL NOT WORK LIKE THIS
+	#specificity[name] = arguments[0].split("\t")[2], arguments[0].split("\t")[3], arguments[0].split("\t")[5], arguments[0].split("\t")[17].split(":")[2] ,arguments[1].split("\t")[2], arguments[1].split("\t")[3], arguments[1].split("\t")[5], arguments[1].split("\t")[17].split(":")[2]
+	#print(specificity)
+	if i == 6:
+		exit("break")
+	i += 1
+"""
