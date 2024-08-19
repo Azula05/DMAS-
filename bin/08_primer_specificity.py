@@ -12,159 +12,104 @@ parser = argparse.ArgumentParser(description="give arguments to filter script")
 parser.add_argument('-i', nargs=1, required=True, help="input tsv file with the primers table")
 # parser.add_argument('-t', nargs=1, required=True, help="number of threads to use") cannot be used in nextflow with parallel processes (will ask for too many threads)
 parser.add_argument('-b', nargs=1, required=True, help="path to the bowtie2 index")
+parser.add_argument('-t', nargs=1, required=True, help="Number of threads to use for bowtie2")
 
 args = parser.parse_args()
 primers_file = args.i[0]
 # threads = args.t[0]
+threads = args.t[0]
+# index
 bowtie2_index = args.b[0]
-bowtie1_index = args.b[0]
-columba_index = args.b[0]
-
-####################################################################################################
-#################################    A. specificity filter  ########################################
-####################################################################################################
-
-# rules from https://academic.oup.com/clinchem/article/59/10/1470/5622018?login=true fig 6 are used as filter criteria
-# The criteria are:
-
-# Strict: 
-# - no mismatches in either primer = off-target and is discarted
-# - primers with at least 4 mismatches for a single primer = no off-target and is kept
-# - primers with a total of at least 5 mismatches between both primers = no off-target and is kept
-
-# Loose:
-# - primers with at least 3 mismatches for a single primer = no off-target and is kept
-# - primers with a total of at least 4 mismatches between both primers = no off-target and is kept
-
-# MM primer1	MM primer2	sum MM	loose			strict
-# 0				0			0		off-target		off-target
-# 1				0			1		off-target		off-target
-# 0				1			1		off-target		off-target
-# 2				0			2		off-target		off-target
-# 0				2			2		off-target		off-target
-# 1				1			2		off-target		off-target
-# 2				1			3		off-target		off-target
-# 1				2			3		off-target		off-target
-# 3				0			3		no off-target	off-target
-# 0				3			3		no off-target	off-target
-# 1				3			4		no off-target	off-target
-# 3				1			4		no off-target	off-target
-# 2				2			4		no off-target	off-target
-# 4				0			4		no off-target	no off-target
-# 0				4			4		no off-target	no off-target
-# 2				3			5		no off-target	no off-target
-# 3				2			5		no off-target	no off-target
-# 4				1			5		no off-target	no off-target
-# 1				4			5		no off-target	no off-target
-# 3				3			6		no off-target	no off-target
-
-# open the primer file
-primers_file = open(primers_file,'r')
-
-# create a dictionary with the primers
-primers={}
-line_nr = 0
-for line in primers_file:
-	line = line.strip().split('\t')
-	## Ignore the header
-	if line_nr == 0:
-		line_nr += 1
-		continue
-	## first one should be the forward primer and the second one the reverse primer
-	elif "_F_" in line[0]:
-		primers[line[0]] = line[1], line[8]
-	elif "_R_" in line[0]:
-		primers[line[0]] = line[8], line[1]
-
-primers_file.close()
-
-
-
-
-temp = open("specificity.txt", "w")
-
-
 
 
 ################################################################################################
 ###################################   Bowtie2   ################################################
 ################################################################################################
 
-# Go through the dictionary and check the specificity of the primers
-specificity = {}
-i = 0
-for name, primer_pair in primers.items():
-	input_line = ">" + name + "_forward" + "\n" + primer_pair[0] + "\n" + ">" + name + "_reverse" + "\n" + primer_pair[1]
-# echo -e ">primer1_forward\nACTGACTGACTGACTG\n>primer1_reverse\nTGACTGACTGACTGACT" | bowtie2 --threads 2 --no-hd --xeq --no-sq --quiet -x ./Assets/GRCh38/Index_bowtie/GRCh38_noalt_as -f - --very-sensitive -N 1
-	# bowtie2 --no-hd --xeq --no-sq -X 1000 -N 1 --mp 1,1 --quiet -x " + bowtie2_index +" -X1000 --very-sensitive -f - --threads 3
-	# bowtie --tryhard -X1000 -v3 --quiet -x " + bowtie1_index + " --quiet --threads 3 -f -
-	command = "echo \"" + input_line +"\" | bowtie2 --no-hd --xeq --no-sq -X 1000 -N 1 --mp 1,1 --quiet -x " + bowtie2_index +" -X1000 --very-sensitive -f - --threads 3"
-	print(i)
-	temp.write(str(i)+"\n")
+# get the information from the table
+# # Open the table and save the contents
+with open(primers_file,'r') as table:
+	lines = table.readlines()
+table.close()
+
+# rewrite the table with the new columns
+output_file = open(primers_file, 'w')
+# wtite the header
+output_file.write("Name\tSpecific_primer\tMatch_Tm\tSingle_MM_Tm\tDouble_MM_Tm\tMM_delta\tGC%\tLenght\tCommon_primer\tMatch_Tm_common\tGC%_common\tLength_common\tFWD_validation\tREV_validation\tSNPs_FWD\tSec_str_FWD\tSNPs_REV\tSec_str_REV\tDeltaG\tAmplicon\tAmp_length\tPredicted_structure\tAmplicon_delta_G\tForward_map_location\tForward_number_of_MM\tReverse_map_location\tReverse_number_of_MM\n")    
+# loop the lines
+line_nr = 0
+for line in lines:
+	line = line.strip().split('\t')
+	name = line[0]
+	## Ignore the header
+	if line_nr == 0:
+		line_nr += 1
+		continue
+	## get the primer to check for specificity
+	elif "_F_" in line[0]:
+		forward = line[1]
+		reverse = line[8]
+	elif "_R_" in line[0]:
+		forward = line[8]
+		reverse = line[1]
+	## create the input line to check for specificity
+	input_forward= ">" + name + "_forward" + "\n" + forward + "\n"
+	## run bowtie2
+	command = "echo \"" + input_forward +"\" | bowtie2 --no-hd --xeq --no-sq -X 1000 -N 1 --mp 1,1 --quiet -x " + bowtie2_index +" -X1000 --very-sensitive -f - --threads " + threads
+	## capture the output
 	process = os.popen(command)
 	output = process.read()
-	process.close()  # Ensure proper resource management
-	# Extract stdout from the command
+	## Ensure proper resource management
+	process.close()  
+	## Extract stdout from the command
 	arguments = output.split("\n")
-	temp.write(str(arguments)+"\n")
-	# USE RE WILL NOT WORK LIKE THIS
-	#specificity[name] = arguments[0].split("\t")[2], arguments[0].split("\t")[3], arguments[0].split("\t")[5], arguments[0].split("\t")[17].split(":")[2] ,arguments[1].split("\t")[2], arguments[1].split("\t")[3], arguments[1].split("\t")[5], arguments[1].split("\t")[17].split(":")[2]
-	#print(specificity)
-	#if i == 6:
-		#exit("break")
-	i += 1
+	## Loop all output lines
 
-## ADD CPUS AAND MAKE  SURE IIIIIT IS NOT PARAALLEL AAND USES AALL
-
-
-"""
-################################################################################################
-###################################   Bowtie1   ################################################
-################################################################################################
-specificity = {}
-i = 0
-for name, primer_pair in primers.items():
-	input_line = ">" + name + "_forward" + "\n" + primer_pair[0] + "\n" + ">" + name + "_reverse" + "\n" + primer_pair[1]
-# echo -e ">primer1_forward\nACTGACTGACTGACTG\n>primer1_reverse\nTGACTGACTGACTGACT" | bowtie2 --threads 2 --no-hd --xeq --no-sq --quiet -x ./Assets/GRCh38/Index_bowtie/GRCh38_noalt_as -f - --very-sensitive -N 1
-	# "echo \"" + input_line +"\" | bowtie2 --no-hd --xeq --no-sq --quiet -x " + bowtie2_index +" -f - --very-sensitive -N 1"
-	command = "echo \"" + input_line +"\" | bowtie --tryhard -X1000 -v3 --quiet -x " + bowtie1_index + " --quiet --threads 3 -f -"
-	print(i)
-	temp.write(str(i))
+	# FORWARD
+	matches_forward = []
+	for argument in arguments:
+		## Skip empty lines
+		if argument != "":
+			## 
+			argument = argument.split("\t")
+			name = argument[0]
+			chromosome = argument[2]
+			start = argument[3]
+			mismatch = argument[5]
+			pattern = re.compile('NM:i:\d+')
+			for item in argument:
+				if pattern.match(item):
+					nm = item.split(":")[2]
+			matches_forward.append(chromosome + ":" + start + "\t" + nm)
+	## create the input line to check for specificity
+	input_reverse= ">" + name + "_reverse" + "\n" + reverse
+	## run bowtie2
+	command = "echo \"" + input_reverse +"\" | bowtie2 --no-hd --xeq --no-sq -X 1000 -N 1 --mp 1,1 --quiet -x " + bowtie2_index +" -X1000 --very-sensitive -f - --threads " + threads
+	## capture the output
 	process = os.popen(command)
 	output = process.read()
-	process.close()  # Ensure proper resource management
-	# Extract stdout from the command
+	## Ensure proper resource management
+	process.close()  
+	## Extract stdout from the command
 	arguments = output.split("\n")
-	temp.write(str(arguments)+"\n")
-	# USE RE WILL NOT WORK LIKE THIS
-	#specificity[name] = arguments[0].split("\t")[2], arguments[0].split("\t")[3], arguments[0].split("\t")[5], arguments[0].split("\t")[17].split(":")[2] ,arguments[1].split("\t")[2], arguments[1].split("\t")[3], arguments[1].split("\t")[5], arguments[1].split("\t")[17].split(":")[2]
-	#print(specificity)
-	i += 1
-temp.close()
-"""
-"""
-################################################################################################
-###################################   columba   ################################################
-################################################################################################
+	## Loop all output lines
 
-specificity = {}
-i = 0
-for name, primer_pair in primers.items():
-	input_line = ">" + name + "_forward" + "\n" + primer_pair[0] + "\n" + ">" + name + "_reverse" + "\n" + primer_pair[1]
-# echo -e ">primer1_forward\nACTGACTGACTGACTG\n>primer1_reverse\nTGACTGACTGACTGACT" | bowtie2 --threads 2 --no-hd --xeq --no-sq --quiet -x ./Assets/GRCh38/Index_bowtie/GRCh38_noalt_as -f - --very-sensitive -N 1
-	# "echo \"" + input_line +"\" | bowtie2 --no-hd --xeq --no-sq --quiet -x " + bowtie2_index +" -f - --very-sensitive -N 1"
-	command = "echo \"" + input_line +"\" | columba primer_search --primers - --targets genome.fasta"
-	print(i)
-	process = os.popen(command)
-	output = process.read()
-	process.close()  # Ensure proper resource management
-	# Extract stdout from the command
-	arguments = output.split("\n")
-	print(arguments)
-	# USE RE WILL NOT WORK LIKE THIS
-	#specificity[name] = arguments[0].split("\t")[2], arguments[0].split("\t")[3], arguments[0].split("\t")[5], arguments[0].split("\t")[17].split(":")[2] ,arguments[1].split("\t")[2], arguments[1].split("\t")[3], arguments[1].split("\t")[5], arguments[1].split("\t")[17].split(":")[2]
-	#print(specificity)
-	if i == 6:
-		exit("break")
-	i += 1
-"""
+	# REVERSE
+	matches_reverse = []
+	for argument in arguments:
+		## Skip empty lines
+		if argument != "":
+			## 
+			argument = argument.split("\t")
+			name = argument[0]
+			chromosome = argument[2]
+			start = argument[3]
+			mismatch = argument[5]
+			pattern = re.compile('NM:i:\d+')
+			for item in argument:
+				if pattern.match(item):
+					nm = item.split(":")[2]
+			matches_reverse.append(chromosome + ":" + start + "\t" + nm)
+	## write the output to the table
+	output_file.write("\t".join(line) + "\t" + str(matches_forward) + "\t" + str(matches_reverse) + "\n")
+output_file.close()
