@@ -83,7 +83,7 @@ if specificity != "off":
 				for item in argument:
 					if pattern.match(item):
 						nm = item.split(":")[2]
-				matches_forward.append(chromosome + ":" + start + "\t" + nm)
+				matches_forward.append(chromosome + ":" + start + ":" + mismatch+ ":" + nm)
 		## create the input line to check for specificity
 		input_reverse= ">" + name + "_reverse" + "\n" + reverse
 		## run bowtie2
@@ -112,7 +112,7 @@ if specificity != "off":
 				for item in argument:
 					if pattern.match(item):
 						nm = item.split(":")[2]
-				matches_reverse.append(chromosome + ":" + start + "\t" + nm)
+				matches_reverse.append(chromosome + ":" + start + ":" + mismatch+ ":" + nm)
 		## write the output to the table
 		output_file.write("\t".join(line) + "\t" + str(matches_forward) + "\t" + str(matches_reverse) + "\n")
 line_nr = 0
