@@ -25,6 +25,7 @@ parser.add_argument("-M", nargs=1, required=True, help="max mispriming library")
 
 parser.add_argument("-t", nargs=1, required=True, help="seq-file with template")
 parser.add_argument("-p", nargs=1, required=True, help="file with primers")
+parser.add_argument("-s", nargs=1, required=True, help="file with snps")
 
 parser.add_argument("-dnac", nargs=1, required=True, help="concetration of the oligos µM")
 parser.add_argument("-Na", nargs=1, required=True, help="Na concentration mM")
@@ -50,6 +51,7 @@ MAX_AMPLICON_LENGTH = args.l[0]
 MISPRIMING_LIBRARY = args.m[0]
 MAX_MISPRIMING_LIBRARY = args.M[0]
 input_file = args.t[0]
+snp_file = args.s[0]
 dnac_conc = args.dnac[0]
 Na_conc = args.Na[0]
 K_conc = args.K[0]
@@ -90,6 +92,18 @@ for line in primers:
         break
 primers.close()
 
+# Get the SNPs
+## Foward primer
+avoid =""
+snp_file = open(args.s[0], "r")
+for line in snp_file:
+    line = line.rstrip().split('\t')
+    position = int(line[1])-int(start) +1 
+    if position == int(targeted_snp_pos):
+        continue
+    else:
+        avoid = avoid + str(position) + "," + "1" + " "
+
 # write the forward input file for primer3
 ## settings in the input file will overwrite the settings in the primer3 settings file
 Primer3_common = open("Primer3_" + seq_ID + "_common_primer_REV.txt", "w")
@@ -118,6 +132,7 @@ Primer3_common.write("PRIMER_DNA_CONC=" + dnac_conc +"\n")
 Primer3_common.write("PRIMER_SALT_MONOVALENT="+ Na_conc + "\n")
 Primer3_common.write("PRIMER_SALT_DIVALENT="+ Mg_conc + "\n")
 Primer3_common.write("PRIMER_DNTP_CONC="+ dNTPs_conc + "\n")
+Primer3_common.write("SEQUENCE_EXCLUDED_REGION=" + avoid + "\n")
 Primer3_common.write("=\n")
 
 Primer3_common.close()
@@ -149,6 +164,7 @@ Primer3_common.write("PRIMER_DNA_CONC=" + dnac_conc +"\n")
 Primer3_common.write("PRIMER_SALT_MONOVALENT="+ Na_conc + "\n")
 Primer3_common.write("PRIMER_SALT_DIVALENT="+ Mg_conc + "\n")
 Primer3_common.write("PRIMER_DNTP_CONC="+ dNTPs_conc + "\n")
+Primer3_common.write("SEQUENCE_EXCLUDED_REGION=" + avoid + "\n")
 Primer3_common.write("=\n")
 
 Primer3_common.close()
