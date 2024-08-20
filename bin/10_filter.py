@@ -246,6 +246,68 @@ for line in lines:
     ################################################################################################
     ###################################   Secondary structure   ####################################
     ################################################################################################
+    
+    # if off
+    Sec_str_tag = "NA"
+    Sec_str_lost = 0
+
+    # secondary structure templates
+    try:
+        # forward positions
+        Sec_str_temp_FWD = line[13]
+        if Sec_str_temp_FWD == "0 predicted":
+            Sec_str_temp_FWD = 0
+        else:
+            Sec_str_temp_FWD = Sec_str_temp_FWD.replace("[","").replace("]","").split(",")
+        # deltaG
+        delta_G = float(line[16])
+        # reverse positions
+        Sec_str_temp_REV = line[15]
+        if Sec_str_temp_REV == "0 predicted":
+            Sec_str_temp_REV = 0
+        else:
+            Sec_str_temp_REV = Sec_str_temp_REV.replace("[","").replace("]","").split(",")
+        # amplicon
+        amplicon = line[21]
+        amp_delta_G = float(line[22])
+    except:
+        Sec_str_tag = "error: could not get secondary structure templates"
+
+
+    # check the template
+
+    # if the delta G is less than -15 it fails if any structures are found.
+    if secondary_structure_filter == "strict":
+        if delta_G < -15.0:
+            if (Sec_str_temp_FWD != 0 and Sec_str_temp_REV != 0) or (Sec_str_temp_FWD !=[] and Sec_str_temp_REV != []):
+                Sec_str_tag = "FAIL_template"
+            else:
+                Sec_str_tag = "PASS_template"
+        else:
+            Sec_str_tag = "PASS_template"
+    
+    elif secondary_structure_filter == "loose":
+        if float(delta_G) < -15:
+            for i in Sec_str_temp_FWD:
+                if i in [-1,-2,-3,-4,-5,-6]:
+                    Sec_str_tag = "FAIL_template"
+                else:
+                    Sec_str_tag = "PASS_template"
+        else:
+            Sec_str_tag = "PASS_template"
+
+    # check amplicon
+    if amp_delta_G < -15.0:
+        Sec_str_tag = "FAIL_amplicon"
+    else:
+        if amp_delta_G < -5.0:
+            if "(" in  amplicon or ")" in amplicon:
+                Sec_str_tag = "FAIL_amplicon"
+            elif Sec_str_tag != "FAIL_template":
+                Sec_str_tag = "PASS_amplicon"
+        elif Sec_str_tag != "FAIL_template":
+            Sec_str_tag = "PASS_amplicon"
+            
 
     ################################################################################################
     ###################################   Validation   #############################################
@@ -255,7 +317,7 @@ for line in lines:
     ################################################################################################
     ###################################   Write the table   ########################################
     ################################################################################################
-    full_table.write("\t".join(line) + "\t" + Specificity_tag + "\t" + SNP_tag + "\n")
+    full_table.write("\t".join(line) + "\t" + Specificity_tag + "\t" + SNP_tag + "\t" + Sec_str_tag + "\n")
 
 full_table.close()
 filtered_table.close()
