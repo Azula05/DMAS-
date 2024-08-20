@@ -383,16 +383,12 @@ total = line_nr - 1
 table = pd.read_csv(primers_file, sep="\t")
 # Fails on Specificity_filter
 specifity_lost = len(table[table["Specificity_filter"] == "FAIL"])
-print("Specificity_filter: ", specifity_lost)
 # Fails on SNP_filter
 SNP_lost = len(table[table["SNP_filter"] == "FAIL"])
-print("SNP_filter: ", SNP_lost)
 # Fails on Sec_str_filter
 Sec_str_lost = len(table[table["Sec_str_filter"] == "FAIL"])
-print("Sec_str_filter: ", Sec_str_lost)
 # Fails on Validation_filter
 validation_lost = len(table[table["Validation_filter"] == "FAIL"])
-print("Validation_filter: ", validation_lost)
 
 # append to the log file
 log.write(seq_ID + "\t" + str(total) + "\t" + str(specifity_lost) + "\t" + str(SNP_lost) + "\t" + str(Sec_str_lost) + "\t" + str(validation_lost) + "\n")
