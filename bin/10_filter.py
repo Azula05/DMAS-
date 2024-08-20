@@ -8,6 +8,7 @@ The output of this will include the full table a log file and a filtered table.
 
 import argparse
 import os
+import pandas as pd
 
 parser = argparse.ArgumentParser(description="give arguments to filter script")
 parser.add_argument("-i", nargs = 1, required=True, help="file with sequence info example: DMAS-0.txt")
@@ -15,12 +16,14 @@ parser.add_argument("-p", nargs = 1, required=True, help="file with all designed
 parser.add_argument("-s", nargs = 1, required=True, help="specificity filter: off, strict, loose")
 parser.add_argument("-S", nargs=1, required=True, help="SNP filter: off, strict, loose")
 parser.add_argument("-t", nargs=1, required=True, help="Secondary structure filter: off, strict, loose")
-parser.add_argument("-v", nargs=1, required=True, help="Validation filter off, strict, loose") 
+parser.add_argument("-v", nargs=1, required=True, help="Validation filter off, strict, loose")
+parser.add_argument("-l", nargs=1, required=True, help="log file")
 args = parser.parse_args()
 
 # get the arguments
 input_file = args.i[0]
 primers_file = args.p[0]
+log_file = args.l[0]
 specificity_filter = args.s[0]
 SNP_filter = args.S[0]
 secondary_structure_filter = args.t[0]
@@ -369,4 +372,29 @@ filtered_table.close()
 ################################################################################################
 # Append to the log file
 ################################################################################################
-total = line_nr # 1-based counting (0 is header)
+
+# open the log file
+log = open(log_file, "a")
+
+# total number of lines = total number of pirmers
+total = line_nr - 1
+
+# open the table with pandas
+table = pd.read_csv(primers_file, sep="\t")
+# Fails on Specificity_filter
+specifity_lost = len(table[table["Specificity_filter"] == "FAIL"])
+print("Specificity_filter: ", specifity_lost)
+# Fails on SNP_filter
+SNP_lost = len(table[table["SNP_filter"] == "FAIL"])
+print("SNP_filter: ", SNP_lost)
+# Fails on Sec_str_filter
+Sec_str_lost = len(table[table["Sec_str_filter"] == "FAIL"])
+print("Sec_str_filter: ", Sec_str_lost)
+# Fails on Validation_filter
+validation_lost = len(table[table["Validation_filter"] == "FAIL"])
+print("Validation_filter: ", validation_lost)
+
+# append to the log file
+log.write(seq_ID + "\t" + str(total) + "\t" + str(specifity_lost) + "\t" + str(SNP_lost) + "\t" + str(Sec_str_lost) + "\t" + str(validation_lost) + "\n")
+# close log file
+log.close()
