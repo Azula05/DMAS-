@@ -84,19 +84,77 @@ for line in lines:
     # 3				3			6		no off-target	no off-target
 
     specifity_lost = 0
-    if specificity_filter == "off":
-        Specificity_tag = "NA"
-    elif specificity_filter == "loose":
+    Specificity_tag = "PASS"
+    # filter off => write NA
+    if specificity_filter != "off":
         try:
+            # get the number of mismatches
             Forward_specificity = line[23]
-            i=0
             Forward_specificity = Forward_specificity.replace("[","").replace("]","").replace("'","")
             Forward_specificity = Forward_specificity.split(":")
-            print(Forward_specificity)
             Reverse_specificity = line[24]
+            Reverse_specificity = Reverse_specificity.replace("[","").replace("]","").replace("'","")
+            Reverse_specificity = Reverse_specificity.split(":")
+            # get the original input coordinates
+            input_file = open(input_file, 'r').readline()
+            coord = input_file.split("\t")[-2]
+            input_file.close()
         except:
             specificity_tag = "error"
 
+    # filter loose
+    def specificity_loose(nm_forward, nm_reverse):
+        if nm_forward < 3 and nm_reverse < 3:
+            if nm_forward == 2 and nm_reverse == 2:
+                Specificity_tag = "PASS"
+            else:
+                Specificity_tag = "FAIL"
+        else:
+            Specificity_tag = "PASS"
+        return Specificity_tag
+
+
+
+    if specificity_filter == "loose":
+        # placeholder values
+        nm_forward_prev = 10
+        nm_reverse_prev = 10
+        # The find the lowest amount of mismatches in off-targets: if to low fail
+        for i in range(0,10):
+            try:
+                chr_forward = Forward_specificity[i]
+                start_forward = Forward_specificity[i+1]
+                nm_forward = int(Forward_specificity[i+3])
+            except:
+                continue
+
+            try:
+                chr_reverse = Reverse_specificity[i]
+                start_reverse = Reverse_specificity[i+1]
+                nm_reverse = int(Reverse_specificity[i+3])
+            except:
+                continue
+            # Once a primer pair has failed stop checking the rest
+            if Specificity_tag == "FAIL":
+                continue
+            # check if not on target:
+            if chr_forward == coord.split(":")[0] and chr_reverse == coord.split(":")[0]:
+                if int(start_forward) > int(coord.split(":")[1].split("-")[0]) and int(start_forward) < int(coord.split(":")[1].split("-")[1]) and int(start_reverse) > int(coord.split(":")[1].split("-")[0]) and int(start_reverse) < int(coord.split(":")[1].split("-")[1]):
+                    Specificity_tag = "PASS"
+                # On the same chromosome but not the same region
+                else:
+                    if nm_forward_prev < nm_forward:
+                        nm_forward = nm_forward_prev
+                    elif nm_reverse_prev < nm_reverse:
+                        nm_reverse = nm_reverse_prev
+                    Specificity_tag = specificity_loose(nm_forward, nm_reverse)
+            # off target
+            else:
+                if nm_forward_prev < nm_forward:
+                    nm_forward = nm_forward_prev
+                elif nm_reverse_prev < nm_reverse:
+                    nm_reverse = nm_reverse_prev
+                Specificity_tag = specificity_loose(nm_forward, nm_reverse)
 
 
     ################################################################################################
@@ -112,10 +170,15 @@ for line in lines:
     ################################################################################################
     line_nr += 1
 
-total = line_nr # 1-based counting (0 is header)
+    ################################################################################################
+    ###################################   Write the table   ########################################
+    ################################################################################################
+    full_table.write("\t".join(line) + "\t" + Specificity_tag + "\n")
+
 full_table.close()
 filtered_table.close()
 
 ################################################################################################
 # Append to the log file
 ################################################################################################
+total = line_nr # 1-based counting (0 is header)
