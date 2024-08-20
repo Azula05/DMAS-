@@ -83,9 +83,10 @@ for line in lines:
     # 1				4			5		no off-target	no off-target
     # 3				3			6		no off-target	no off-target
 
+    # OFF
     specifity_lost = 0
-    Specificity_tag = "PASS"
-    # filter off => write NA
+    Specificity_tag = "NA"
+
     if specificity_filter != "off":
         try:
             # get the number of mismatches
@@ -100,11 +101,13 @@ for line in lines:
             coord = input_file.split("\t")[-2]
             input_file.close()
         except:
-            specificity_tag = "error"
+            specificity_tag = "error: could not find specificity"
 
-    # filter loose
+    # LOOSE
     def specificity_loose(nm_forward, nm_reverse):
+        # 3 on a single primer to pass
         if nm_forward < 3 and nm_reverse < 3:
+            # total of 4 mismatches to pass
             if nm_forward == 2 and nm_reverse == 2:
                 Specificity_tag = "PASS"
             else:
@@ -113,53 +116,132 @@ for line in lines:
             Specificity_tag = "PASS"
         return Specificity_tag
 
+    def specificity_strict(nm_forward, nm_reverse):
+        # total of at least 5 mismatches to pass
+        if nm_forward + nm_reverse < 5:
+            # 4 on a single primer to pass
+            if (nm_forward == 4 and nm_reverse == 0) or (nm_forward == 0 and nm_reverse == 4):
+                Specificity_tag = "PASS"
+            else:
+                Specificity_tag = "FAIL"
+        else:
+            Specificity_tag = "PASS"
+        return Specificity_tag
+    
+    # placeholder values
+    nm_forward_prev = 10
+    nm_reverse_prev = 10
+    # The find the lowest amount of mismatches in off-targets: if to low fail
+    for i in range(0,10):
+        try:
+            chr_forward = Forward_specificity[i]
+            start_forward = Forward_specificity[i+1]
+            nm_forward = int(Forward_specificity[i+3])
+        except:
+            continue
 
-
-    if specificity_filter == "loose":
-        # placeholder values
-        nm_forward_prev = 10
-        nm_reverse_prev = 10
-        # The find the lowest amount of mismatches in off-targets: if to low fail
-        for i in range(0,10):
-            try:
-                chr_forward = Forward_specificity[i]
-                start_forward = Forward_specificity[i+1]
-                nm_forward = int(Forward_specificity[i+3])
-            except:
-                continue
-
-            try:
-                chr_reverse = Reverse_specificity[i]
-                start_reverse = Reverse_specificity[i+1]
-                nm_reverse = int(Reverse_specificity[i+3])
-            except:
-                continue
-            # Once a primer pair has failed stop checking the rest
-            if Specificity_tag == "FAIL":
-                continue
-            # check if not on target:
-            if chr_forward == coord.split(":")[0] and chr_reverse == coord.split(":")[0]:
-                if int(start_forward) > int(coord.split(":")[1].split("-")[0]) and int(start_forward) < int(coord.split(":")[1].split("-")[1]) and int(start_reverse) > int(coord.split(":")[1].split("-")[0]) and int(start_reverse) < int(coord.split(":")[1].split("-")[1]):
-                    Specificity_tag = "PASS"
-                # On the same chromosome but not the same region
-                else:
-                    if nm_forward_prev < nm_forward:
-                        nm_forward = nm_forward_prev
-                    elif nm_reverse_prev < nm_reverse:
-                        nm_reverse = nm_reverse_prev
-                    Specificity_tag = specificity_loose(nm_forward, nm_reverse)
-            # off target
+        try:
+            chr_reverse = Reverse_specificity[i]
+            start_reverse = Reverse_specificity[i+1]
+            nm_reverse = int(Reverse_specificity[i+3])
+        except:
+            continue
+        # Once a primer pair has failed stop checking the rest
+        if Specificity_tag == "FAIL":
+            continue
+        # check if not on target:
+        if chr_forward == coord.split(":")[0] and chr_reverse == coord.split(":")[0]:
+            if int(start_forward) > int(coord.split(":")[1].split("-")[0]) and int(start_forward) < int(coord.split(":")[1].split("-")[1]) and int(start_reverse) > int(coord.split(":")[1].split("-")[0]) and int(start_reverse) < int(coord.split(":")[1].split("-")[1]):
+                Specificity_tag = "PASS"
+            # On the same chromosome but not the same region
             else:
                 if nm_forward_prev < nm_forward:
                     nm_forward = nm_forward_prev
                 elif nm_reverse_prev < nm_reverse:
                     nm_reverse = nm_reverse_prev
+                elif specificity_filter == "loose":
+                    Specificity_tag = specificity_loose(nm_forward, nm_reverse)
+                elif specificity_filter == "strict":
+                    Specificity_tag = specificity_strict(nm_forward, nm_reverse)
+                    
+        # off target
+        else:
+            if nm_forward_prev < nm_forward:
+                nm_forward = nm_forward_prev
+            elif nm_reverse_prev < nm_reverse:
+                nm_reverse = nm_reverse_prev
+            elif specificity_filter == "loose":
                 Specificity_tag = specificity_loose(nm_forward, nm_reverse)
+            elif specificity_filter == "strict":
+                Specificity_tag = specificity_strict(nm_forward, nm_reverse)
 
 
     ################################################################################################
     ###################################   SNPs   ##################################################
     ################################################################################################
+    
+    # if filter is off
+    SNP_tag = "NA"
+    SNP_lost = 0
+
+    # get the found SNPs
+    try:
+        SNPs_FWD = line[12]
+        # none found
+        if SNPs_FWD == "0 found":
+            SNPs_FWD = 0
+        # get a list of all the positions found
+        else:
+            SNPs_FWD_list = SNPs_FWD.replace("{","").replace("}","").split(":")
+            SNPs_FWD = []
+            for i in range(0,len(SNPs_FWD_list),2):
+                SNPs_FWD.append(int(SNPs_FWD_list[i]))
+        SNPs_REV = line[14]
+        # none found
+        if SNPs_REV == "0 found":
+            SNPs_REV = 0
+        # get a list of all the positions found
+        else:
+            SNPs_REV_list = SNPs_REV.replace("{","").replace("}","").split(":")
+            SNPs_REV = []
+            for i in range(0,len(SNPs_REV_list),2):
+                SNPs_REV.append(int(SNPs_REV_list[i]))
+    # failed to get the SNPs
+    except:
+        SNP_tag = "error: could not get SNPs"
+
+    # LOOSE
+    def SNP_loose(SNPs, SNP_tag):
+        # if the SNPs are not on position -2,-3 or -4 they pass
+        for i in SNPs:
+            if i in [-2,-3,-4]:
+                SNP_tag = "FAIL"
+        # if it has not yet failed it passes
+        if SNP_tag == "NA":
+            SNP_tag = "PASS"
+        return SNP_tag
+
+    
+    # STRICT
+    def SNP_strict(SNPs_forward, SNPs_reverse):
+        # if there are any SNPs in the primers: fail
+        if SNPs_FWD == [] and SNPs_REV == []:
+            SNP_tag = "PASS"
+        else:
+            SNP_tag = "FAIL"
+        return SNP_tag
+
+    # loop the found SNPs for that line in the table
+    if SNPs_FWD == 0 and SNPs_REV == 0:
+        SNP_tag = "PASS"
+    else:
+        if SNP_filter == "strict":
+            SNP_tag = SNP_strict(SNPs_FWD, SNPs_REV)
+        elif SNP_filter == "loose":
+            if "_F_" in line[0]:
+                SNP_tag = SNP_loose(SNPs_FWD, SNP_tag)
+            elif "_R_" in line[0]:
+                SNP_tag = SNP_loose(SNPs_REV, SNP_tag)
 
     ################################################################################################
     ###################################   Secondary structure   ####################################
@@ -173,7 +255,7 @@ for line in lines:
     ################################################################################################
     ###################################   Write the table   ########################################
     ################################################################################################
-    full_table.write("\t".join(line) + "\t" + Specificity_tag + "\n")
+    full_table.write("\t".join(line) + "\t" + Specificity_tag + "\t" + SNP_tag + "\n")
 
 full_table.close()
 filtered_table.close()
