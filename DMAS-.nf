@@ -44,18 +44,18 @@ params.max_gc = 80			// max GC content
 params.amp_min = 60			// min amplicon length
 params.amp_max = 150 		// max amplicon length
 // mispriming library
-params.mis_lib = "no"		// mispriming library
+params.mis_lib = "$projectDir/Assets/humrep_and_simple.txt"		// mispriming library
 params.max_mis_lib = 12		// max mispriming library
 // filters
-params.snp_filter = 'strict'
-params.spec_filter = 'strict'
-params.upfront_filter = "yes"
+params.snp_filter = 'loose'
+params.spec_filter = 'loose'
+params.sec_str_filter = 'loose'
+params.validation_filter = 'loose'
 // coordinates included in input file
 params.coords = true
 // help message
 params.help = false
 
-index_bowtie = file(params.index_bowtie)
 /*
 ====================================================================================================
 HELP MESSAGE
@@ -96,14 +96,15 @@ def helpMessage() {
 		--min_gc		min GC content (default: 30)
 		--max_gc		max GC content (default: 80)
 		--opt_gc		optimal GC content (default: 50)
-		--amp_min		min amplicon length (default: 60)
+		--amp_min		min amplicon length (default: 50)
 		--amp_max		max amplicon length (default: 150)
-		--mis_lib		fasta file with mispriming library (default: empty)
+		--mis_lib		fasta file with mispriming library (default: humrep_and_simple)
 		--max_mis_lib	max allowed weighted similarity with any sequence in mispriming library file (default: 12)
-	--spec_filter		when set to 'strict', a maximum of 2 MM is allowed; when set to 'loose', a maximum of 5 combined MM is allowed
-	--snp_filter		when set to 'strict', no common SNPs are allowed in primer sequence; when set to 'loose', common SNPs are allowed in 5' first half of primer; when set to 'off', no filter is applied
+	--spec_filter		when set to 'strict', more mismatches are required to be unspecific; when set to 'loose', less mismatches are required to be unspecific; can be turned off with "off" => trunging this off will run the pipeline faster
+	--snp_filter		when set to 'strict', no common SNPs are allowed in primer sequence; when set to 'loose', no SNPs are allowed on position -2,-3,-4, can be turned off with "off"
 	--snp_url			when using a differente species than human, the correct SNP database url should be provided; alternatively, this paramater can be set to 'off' if no SNP database is available
-	--upfront_filter	when set to 'yes', SNPs and secundary structures are avoided before primer design; when set to 'str', secundary structures are avoided before primer design; when set to 'snp', snp are avoided before primer design; when set to 'no', no filtering before primer design is performed
+	--sec_str_filter	when set to 'strict', no secondary structure elements are allowed in primer sequence; when set to 'loose', no secondary structure elements are allowed on position -2,-3,-4,-5,-6 can be turned off with "off"
+	--validation_filter when set to 'strict', both primers need to pass the validation; when set to 'loose', only the specific primer needs to pass the validation; can be turned off with "off"
 	"""
 }
 
@@ -153,20 +154,23 @@ if (params.min_gc.toInteger() > params.max_gc.toInteger() ) {exit 1, " min_gc an
 if (params.opt_gc.toInteger() > params.max_gc.toInteger() || params.opt_gc.toInteger() < params.min_gc.toInteger() ) {exit 1, " opt_gc: ${params.opt_gc} should > min_gc (${params.min_gc}) and < max_gc (${params.max_gc})"}
 // --snp_filter
 if (params.snp_filter != "strict" && params.snp_filter != 'loose' && params.snp_filter != 'off'){
-	exit 1, "Invalid SNP filter: ${params.snp_filter}. Valid options: 'strict','loose'."}
+	exit 1, "Invalid SNP filter: ${params.snp_filter}. Valid options: 'strict','loose','off'."}
 // --spec_filter
-if (params.spec_filter != "strict" && params.spec_filter != 'loose'){
-	exit 1, "Invalid specificity filter: ${params.spec_filter}. Valid options: 'strict','loose'."}
-// --upfront_filter
-if (params.upfront_filter != "yes" && params.upfront_filter != 'str' && params.upfront_filter != 'snp' && params.upfront_filter != 'no'){
-	exit 1, "Invalid SNP filter: ${params.upfront_filter}. Valid options: 'yes','str','snp','no'."}
+if (params.spec_filter != "strict" && params.spec_filter != 'loose' && params.spec_filter != 'off'){
+	exit 1, "Invalid specificity filter: ${params.spec_filter}. Valid options: 'strict','loose','off'."}
+// --sec_str_filter
+if (params.sec_str_filter != "strict" && params.sec_str_filter != 'loose' && params.sec_str_filter != 'off'){
+	exit 1, "Invalid secondary structure filter: ${params.sec_str_filter}. Valid options: 'strict','loose','off'."}
+// --validation_filter
+if (params.validation_filter != "strict" && params.validation_filter != 'loose' && params.validation_filter != 'off'){
+	exit 1, "Invalid validation filter: ${params.validation_filter}. Valid options: 'strict','loose','off'."}
 
 log.info """\
 ==============================================
 D M A S   P I P E L I N E
 ==============================================
 OncoRNALab - Arne Blom / Annelien Morlion / Marieke Vromman / Niels Thomas
-Github - https://github.com/OncoRNALab
+Github - https://github.com/OncoRNALab/DMAS
 Docker - https://hub.docker.com/r/oncornalab/dmas
 ==============================================
 your input file: ${params.input}
@@ -207,5 +211,5 @@ workflow {
 	// process 1
 	splitInput(
 		input_file_handle,
-		index_bowtie)
+		params.index_bowtie)
 }
