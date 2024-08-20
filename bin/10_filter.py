@@ -389,8 +389,10 @@ SNP_lost = len(table[table["SNP_filter"] == "FAIL"])
 Sec_str_lost = len(table[table["Sec_str_filter"] == "FAIL"])
 # Fails on Validation_filter
 validation_lost = len(table[table["Validation_filter"] == "FAIL"])
+# remaining (all passed)
+passed = len(table[(table["Specificity_filter"] == "PASS") & (table["SNP_filter"] == "PASS") & (table["Sec_str_filter"] == "PASS") & (table["Validation_filter"] == "PASS")])
 
 # append to the log file
-log.write(seq_ID + "\t" + str(total) + "\t" + str(specifity_lost) + "\t" + str(SNP_lost) + "\t" + str(Sec_str_lost) + "\t" + str(validation_lost) + "\n")
+log.write(seq_ID + "\t" + str(total) + "\t" + str(specifity_lost) + "\t" + str(SNP_lost) + "\t" + str(Sec_str_lost) + "\t" + str(validation_lost) + "\t"+ str(passed) + "\n")
 # close log file
 log.close()
