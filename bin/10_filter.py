@@ -314,6 +314,7 @@ for line in lines:
             
     if Sec_str_tag == "PASS_amplicon":
         Sec_str_tag = "PASS"
+
     ################################################################################################
     ###################################   Validation   #############################################
     ################################################################################################
@@ -386,13 +387,14 @@ specifity_lost = len(table[table["Specificity_filter"] == "FAIL"])
 # Fails on SNP_filter
 SNP_lost = len(table[table["SNP_filter"] == "FAIL"])
 # Fails on Sec_str_filter
-Sec_str_lost = len(table[table["Sec_str_filter"] == "FAIL"])
+Sec_str_lost = len(table[table["Sec_str_filter"] == "FAIL_template"]) 
+Sec_str_lost_amp = len(table[table["Sec_str_filter"] == "FAIL_amplicon"])
 # Fails on Validation_filter
 validation_lost = len(table[table["Validation_filter"] == "FAIL"])
 # remaining (all passed)
 passed = len(table[(table["Specificity_filter"] == "PASS") & (table["SNP_filter"] == "PASS") & (table["Sec_str_filter"] == "PASS") & (table["Validation_filter"] == "PASS")])
 
 # append to the log file
-log.write(seq_ID + "\t" + str(total) + "\t" + str(specifity_lost) + "\t" + str(SNP_lost) + "\t" + str(Sec_str_lost) + "\t" + str(validation_lost) + "\t"+ str(passed) + "\n")
+log.write(seq_ID + "\t" + str(total) + "\t" + str(specifity_lost) + "\t" + str(SNP_lost) + "\t" + str(Sec_str_lost) + "\t" + str(Sec_str_lost_amp) + "\t" + str(validation_lost) + "\t"+ str(passed) + "\n")
 # close log file
 log.close()
