@@ -46,6 +46,7 @@ for line in lines:
     # Ignore the header and write a new one
     if line_nr == 0:
         full_table.write("Name\tSpecific_primer\tMatch_Tm\tSingle_MM_Tm\tDouble_MM_Tm\tMM_delta\tGC%\tLenght\tCommon_primer\tMatch_Tm_common\tGC%_common\tLength_common\tSNPs_FWD\tSec_str_FWD\tSNPs_REV\tSec_str_REV\tDeltaG_template\tFWD_validation\tREV_validation\tAmplicon\tAmp_length\tPredicted_structure\tAmplicon_delta_G\tForward_specificity\tReverse_specificity\tSpecificity_filter\tSNP_filter\tSec_str_filter\tValidation_filter\n")
+        filtered_table.write("Name\tSpecific_primer\tMatch_Tm\tSingle_MM_Tm\tDouble_MM_Tm\tMM_delta\tGC%\tLenght\tCommon_primer\tMatch_Tm_common\tGC%_common\tLength_common\tSNPs_FWD\tSec_str_FWD\tSNPs_REV\tSec_str_REV\tDeltaG_template\tFWD_validation\tREV_validation\tAmplicon\tAmp_length\tPredicted_structure\tAmplicon_delta_G\n")
         line_nr += 1
         continue
     ################################################################################################
@@ -308,16 +309,59 @@ for line in lines:
         elif Sec_str_tag != "FAIL_template":
             Sec_str_tag = "PASS_amplicon"
             
-
+    if Sec_str_tag == "PASS_amplicon":
+        Sec_str_tag = "PASS"
     ################################################################################################
     ###################################   Validation   #############################################
     ################################################################################################
-    line_nr += 1
+    """
+    I would not be too stringent on this filter as the validation is not a certainty it depends on a lot of primer3 settings.
+    It's more an indication
+    """
+    # if off
+    validation_tag = "NA"
+    validation_lost = 0
+
+    # get the validation results
+    try:
+        validation_FWD = line[17]
+        validation_REV = line[18]
+    except:
+        validation_tag = "error: could not get validation results"
+    
+    # strict
+    if validation_filter == "strict":
+        if validation_FWD != "considered 1, ok 1" or validation_REV != "considered 1, ok 1":
+            validation_tag = "FAIL"
+        else: 
+            validation_tag = "PASS"
+    
+    # loose
+    if validation_filter == "loose":
+        if "_F_" in line[0]:
+            if validation_FWD != "considered 1, ok 1":
+                validation_tag = "FAIL"
+            else:
+                validation_tag = "PASS"
+        elif "_R_" in line[0]:
+            if validation_REV != "considered 1, ok 1":
+                validation_tag = "FAIL"
+            else:
+                validation_tag = "PASS"
 
     ################################################################################################
     ###################################   Write the table   ########################################
     ################################################################################################
-    full_table.write("\t".join(line) + "\t" + Specificity_tag + "\t" + SNP_tag + "\t" + Sec_str_tag + "\n")
+
+    # Full table
+    full_table.write("\t".join(line) + "\t" + Specificity_tag + "\t" + SNP_tag + "\t" + Sec_str_tag + "\t" + validation_tag + "\n")
+    line_nr += 1
+
+    #Filtered table
+    if Specificity_tag == "PASS" and SNP_tag == "PASS" and Sec_str_tag == "PASS" and validation_tag == "PASS":
+        # everything except the last 6 columns
+        line = line[:-2]
+        filtered_table.write("\t".join(line) + "\n")
 
 full_table.close()
 filtered_table.close()
