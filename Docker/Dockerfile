@@ -1,52 +1,50 @@
-# parent image where image is based on
-FROM ubuntu:22.04
+# Docker filer for DMAS
+# Arne Blom, 2024
+
+# Base image
+FROM ubuntu:24.04
 
 # image is non-interactive ONLY DURING BUILD
 ARG DEBIAN_FRONTEND=noninteractive
 
-# run updates and install essentials and fix possible broken packages
-#RUN apt-get update -y --fix-missing
-#RUN apt install -y software-properties-common
-#RUN add-apt-repository ppa:deadsnakes/ppa
-#RUN apt-get install -y --fix-missing build-essential g++ cmake git-all wget unzip python3.9 curl python3.9-distutils libpython3.9-dev python3.9-venv
-#RUN curl https://bootstrap.pypa.io/get-pip.py | python3.9
+# install 'make' function (in build-essential & others from primer3 manual)
+RUN apt-get update -y --fix-missing
+RUN apt-get install -y --fix-missing build-essential g++ cmake git-all
+RUN apt-get install -y wget
+RUN apt-get install -y unzip
+RUN apt-get install -y python3
+RUN apt-get install -y python3-pip
+RUN apt-get install -y git
 
-RUN apt-get update && apt-get install -y --fix-missing build-essential g++ cmake git-all
-RUN apt-get update && apt-get install -y \
-	wget \
-	unzip \
-	python3 \
-	python3-pip \
-	bedtools \
-	bowtie2 \
-&& rm -rf /var/lib/apt/lists/*
+# install python packages
+RUN python3 -m pip config set global.break-system-packages true
+RUN python3 -m pip install -U biopython
+RUN python3 -m pip install -U bio
+RUN python3 -m pip install -U pandas
+RUN python3 -m pip install -U datetime
+RUN python3 -m pip install -U pybedtools
+RUN python3 -m pip install -U requests
 
-# install primer3 (version 2.6.1)
+# install primer3
 WORKDIR /bin
-RUN wget https://github.com/primer3-org/primer3/archive/v2.6.1.tar.gz
-RUN tar -xvf v2.6.1.tar.gz
-WORKDIR /bin/primer3-2.6.1/src
+RUN git clone https://github.com/primer3-org/primer3.git primer3
+WORKDIR /bin/primer3/src
 RUN make all
+RUN cp ./primer3_core /usr/bin/primer3_core
+WORKDIR /bin
+RUN rm -rf primer3
 
-WORKDIR /
+# install bigBedToBed dependencies
+RUN apt-get install -y libkrb5-3 curl
+
+# bigBedToBed
+RUN wget https://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/bigBedToBed
+RUN chmod +x bigBedToBed
 
 # install bowtie2
-#WORKDIR /bin
-#RUN wget https://github.com/BenLangmead/bowtie2/releases/download/v2.4.5/bowtie2-2.4.5-linux-x86_64.zip
-#RUN unzip bowtie2-2.4.5-linux-x86_64.zip
-#WORKDIR /
+RUN apt-get install -y bowtie2
 
-# install bigBedtoBed
-RUN apt-get update && apt-get install -y libkrb5-3 \
-	curl && rm -rf /var/lib/apt/lists/*
-WORKDIR /bin
-RUN wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bigBedToBed
-RUN chmod a+x bigBedToBed
-
+# scripts
 WORKDIR /
-
-# install NUPACK
-ADD nupack-4.0.1.3 nupack-4.0.1.3
-RUN pip3 install -U nupack -f nupack-4.0.1.3/package
-RUN pip3 install -U pytest
-RUN python3 -m pytest --pyargs nupack
+ADD scripts /usr/bin
+RUN chmod +x /usr/bin/01_generate_template.py /usr/bin/02_check_coord.py /usr/bin/03_get_sec_str_temp_ViennaRNA.py /usr/bin/04_get_SNPs.py /usr/bin/05_primer_generation.py /usr/bin/06_Primer3_common_primer.py /usr/bin/07_primer_validation.py /usr/bin/08_get_sec_str_amp_ViennaRNA.py /usr/bin/09_primer_specificity.py /usr/bin/0_filter.py
