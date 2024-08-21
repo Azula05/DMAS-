@@ -53,6 +53,7 @@ params.sec_str_filter = 'loose'
 params.validation_filter = 'loose'
 // coordinates included in input file
 params.coords = true
+params.species = 'human'
 
 // help message
 params.help = false
@@ -205,11 +206,82 @@ process splitInput {
 	path(bowtie_index)
 
 	output:
-	path 'seq-*'
+	path 'DMAS-*'
 	path 'start_time.txt'
 	"""
 	01_generate_template.py -c $params.coords -i $input_file_handle -p ${task.cpus} -b $bowtie_index/$params.index_bowtie_name
 	python3 -c 'from datetime import datetime; print(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))' > start_time.txt
+	"""
+}
+
+/*
+====================================================================================================
+PROCESS 2 - check coordinates
+====================================================================================================
+This step is only performed when the species is human!
+This tool was developed with the human genome in mind, however if the bowtie index is available for 
+other species, the pipeline can be run for other species as well.
+====================================================================================================
+*/
+
+process checkCoordinates {
+	tag "Checking coordinates"
+	cpus = params.cpus
+
+	input:
+	path(ind_dmas_file_handle)
+
+	output:
+	path 'warning.txt'
+
+	when: params.coords == true && params.species == 'human'
+	when: params.species == 'human'
+
+	script:
+	"""
+	02_check_coord.py -i $ind_dmas_file_handle
+	"""
+}
+
+/*
+====================================================================================================
+PROCESS 3 - Secondary structure of the template
+====================================================================================================
+*/
+
+process sec_str_temp {
+	tag "Checking secondary structure of the template"
+
+	input:
+	path(ind_dmas_file_handle)
+
+	output:
+	tuple val("${ind_dmas_file_handle.getBaseName()}"), path('sec-str_*_wt.txt')
+	tuple val("${ind_dmas_file_handle.getBaseName()}"), path('sec-str_*_mut.txt')
+
+	script:
+	"""
+	03_get_sec_str_temp_ViennaRNA.py -t $ind_dmas_file_handle
+	"""
+}
+
+/*
+====================================================================================================
+PROCESS 4 - Find common single nucleotide polymorphisms
+====================================================================================================
+*/
+
+process findSNPs {
+	tag "Finding common single nucleotide polymorphisms"
+
+	input:
+	path(ind_dmas_file_handle)
+	
+	output:
+	tuple val("${ind_dmas_file_handle.getBaseName()}"), path('snps_*.bed')
+	script:
+	"""
+	04_get_SNPs.py -i $ind_dmas_file_handle -u $params.snp_url
 	"""
 }
 
@@ -223,4 +295,36 @@ workflow {
 	splitInput(
 		input_file_handle,
 		params.index_bowtie)
+	// process 2
+	checkCoordinates(
+		splitInput.out[0].flatten()
+	)
+	// process 3
+	sec_str_temp(
+		splitInput.out[0].flatten()
+	)
+	// process 4
+	findSNPs(
+		splitInput.out[0].flatten()
+	)
+}
+
+workflow.onComplete {
+	println "\n\t\t\t  Pipeline execution summary\n"+
+		"=================================================================================\n\n"+
+		"\tPipeline completed at:\t$workflow.complete\n" +
+		"\tExecution status:\t${ workflow.success ? 'OK' : 'failed' }\n"+
+		"\tNextflow version:\t$nextflow.version\n"+
+		"\tExecuted command:\t$workflow.commandLine\n"+
+		"\tRun name:\t\t$workflow.runName\n"+
+		"\tConfig file:\t\t$workflow.configFiles\n"+
+		"\tProfile:\t\t$workflow.profile\n"+
+		"\tContainer engine:\t$workflow.containerEngine\n"+
+		"\tContainer:\t\t$workflow.container\n"+
+		"\tStart time:\t\t$workflow.start\n"+
+		"\tCompletion:\t\t$workflow.complete\n"+
+		"\tDuration:\t\t$workflow.duration\n"+
+		"\tProject directory:\t$workflow.projectDir\n"+
+		"\tExit status:\t\t$workflow.exitStatus\n"+
+		"================================================================================="
 }
