@@ -91,8 +91,8 @@ for line in lines:
 
     # OFF
     specifity_lost = 0
-    Specificity_tag_loose = "NA"
-    Specificity_tag_strict = "NA"
+    Specificity_tag_loose = "off"
+    Specificity_tag_strict = "off"
 
     if specificity_filter != "off":
         try:
@@ -108,59 +108,70 @@ for line in lines:
             coord = input_file.split("\t")[-2]
             input_file.close()
         except:
-            Specificity_tag_loose = "FAIL"
-            Specificity_tag_strict = "FAIL"
+            Specificity_tag_loose = "error: could not get specificity"
+            Specificity_tag_strict = "error: could not get specificity"
 
-    # LOOSE
-    def specificity_loose(nm_forward, nm_reverse):
-        # 3 on a single primer to pass
-        if nm_forward < 3 and nm_reverse < 3:
-            # total of 4 mismatches to pass
-            if nm_forward == 2 and nm_reverse == 2:
-                Specificity_tag_loose = "PASS"
+        # LOOSE
+        def specificity_loose(nm_forward, nm_reverse):
+            # 3 on a single primer to pass
+            if nm_forward < 3 and nm_reverse < 3:
+                # total of 4 mismatches to pass
+                if nm_forward == 2 and nm_reverse == 2:
+                    Specificity_tag_loose = "PASS"
+                else:
+                    Specificity_tag_loose = "FAIL"
             else:
-                Specificity_tag_loose = "FAIL"
-        else:
-            Specificity_tag_loose = "PASS"
-        return Specificity_tag_loose
-
-    def specificity_strict(nm_forward, nm_reverse):
-        # total of at least 5 mismatches to pass
-        if nm_forward + nm_reverse < 5:
-            # 4 on a single primer to pass
-            if (nm_forward == 4 and nm_reverse == 0) or (nm_forward == 0 and nm_reverse == 4):
-                Specificity_tag_strict = "PASS"
-            else:
-                Specificity_tag_strict = "FAIL"
-        else:
-            Specificity_tag_strict = "PASS"
-        return Specificity_tag_strict
-    
-    # placeholder values
-    nm_forward_prev = 10
-    nm_reverse_prev = 10
-    # The find the lowest amount of mismatches in off-targets: if to low fail
-    for i in range(0,10):
-        try:
-            chr_forward = Forward_specificity[i]
-            start_forward = Forward_specificity[i+1]
-            nm_forward = int(Forward_specificity[i+3])
-        except:
-            continue
-
-        try:
-            chr_reverse = Reverse_specificity[i]
-            start_reverse = Reverse_specificity[i+1]
-            nm_reverse = int(Reverse_specificity[i+3])
-        except:
-            continue
-
-        # check if not on target:
-        if chr_forward == coord.split(":")[0] and chr_reverse == coord.split(":")[0]:
-            if int(start_forward) > int(coord.split(":")[1].split("-")[0]) and int(start_forward) < int(coord.split(":")[1].split("-")[1]) and int(start_reverse) > int(coord.split(":")[1].split("-")[0]) and int(start_reverse) < int(coord.split(":")[1].split("-")[1]):
                 Specificity_tag_loose = "PASS"
+            return Specificity_tag_loose
+
+        def specificity_strict(nm_forward, nm_reverse):
+            # total of at least 5 mismatches to pass
+            if nm_forward + nm_reverse < 5:
+                # 4 on a single primer to pass
+                if (nm_forward == 4 and nm_reverse == 0) or (nm_forward == 0 and nm_reverse == 4):
+                    Specificity_tag_strict = "PASS"
+                else:
+                    Specificity_tag_strict = "FAIL"
+            else:
                 Specificity_tag_strict = "PASS"
-            # On the same chromosome but not the same region
+            return Specificity_tag_strict
+        
+        # placeholder values
+        nm_forward_prev = 10
+        nm_reverse_prev = 10
+        # The find the lowest amount of mismatches in off-targets: if to low fail
+        for i in range(0,10):
+            try:
+                chr_forward = Forward_specificity[i]
+                start_forward = Forward_specificity[i+1]
+                nm_forward = int(Forward_specificity[i+3])
+            except:
+                continue
+
+            try:
+                chr_reverse = Reverse_specificity[i]
+                start_reverse = Reverse_specificity[i+1]
+                nm_reverse = int(Reverse_specificity[i+3])
+            except:
+                continue
+
+            # check if not on target:
+            if chr_forward == coord.split(":")[0] and chr_reverse == coord.split(":")[0]:
+                if int(start_forward) > int(coord.split(":")[1].split("-")[0]) and int(start_forward) < int(coord.split(":")[1].split("-")[1]) and int(start_reverse) > int(coord.split(":")[1].split("-")[0]) and int(start_reverse) < int(coord.split(":")[1].split("-")[1]):
+                    Specificity_tag_loose = "PASS"
+                    Specificity_tag_strict = "PASS"
+                # On the same chromosome but not the same region
+                else:
+                    if nm_forward_prev < nm_forward:
+                        nm_forward = nm_forward_prev
+                    if nm_reverse_prev < nm_reverse:
+                        nm_reverse = nm_reverse_prev
+                    if Specificity_tag_loose != "FAIL":
+                        Specificity_tag_loose = specificity_loose(nm_forward, nm_reverse)
+                    if Specificity_tag_strict != "FAIL":
+                        Specificity_tag_strict = specificity_strict(nm_forward, nm_reverse)
+                        
+            # off target
             else:
                 if nm_forward_prev < nm_forward:
                     nm_forward = nm_forward_prev
@@ -170,17 +181,6 @@ for line in lines:
                     Specificity_tag_loose = specificity_loose(nm_forward, nm_reverse)
                 if Specificity_tag_strict != "FAIL":
                     Specificity_tag_strict = specificity_strict(nm_forward, nm_reverse)
-                    
-        # off target
-        else:
-            if nm_forward_prev < nm_forward:
-                nm_forward = nm_forward_prev
-            if nm_reverse_prev < nm_reverse:
-                nm_reverse = nm_reverse_prev
-            if Specificity_tag_loose != "FAIL":
-                Specificity_tag_loose = specificity_loose(nm_forward, nm_reverse)
-            if Specificity_tag_strict != "FAIL":
-                Specificity_tag_strict = specificity_strict(nm_forward, nm_reverse)
 
 
     ################################################################################################
@@ -188,143 +188,145 @@ for line in lines:
     ################################################################################################
     
     # if filter is off
-    SNP_tag_loose = "NA"
-    SNP_tag_strict = "NA"
+    SNP_tag_loose = "off"
+    SNP_tag_strict = "off"
     SNP_lost = 0
 
-    # get the found SNPs
-    try:
-        SNPs_FWD = line[12]
-        # none found
-        if SNPs_FWD == "0 found":
-            SNPs_FWD = 0
-        # get a list of all the positions found
-        else:
-            SNPs_FWD_list = SNPs_FWD.replace("{","").replace("}","").split(":")
-            SNPs_FWD = []
-            for i in range(0,len(SNPs_FWD_list),2):
-                SNPs_FWD.append(int(SNPs_FWD_list[i]))
-        SNPs_REV = line[14]
-        # none found
-        if SNPs_REV == "0 found":
-            SNPs_REV = 0
-        # get a list of all the positions found
-        else:
-            SNPs_REV_list = SNPs_REV.replace("{","").replace("}","").split(":")
-            SNPs_REV = []
-            for i in range(0,len(SNPs_REV_list),2):
-                SNPs_REV.append(int(SNPs_REV_list[i]))
-    # failed to get the SNPs
-    except:
-        SNP_tag_loose = "error: could not get SNPs"
-        SNP_tag_strict = "error: could not get SNPs"
+    if SNP_filter != "off":
+        if SNP_filter != "off":
+            # get the found SNPs
+            try:
+                SNPs_FWD = line[12]
+                # none found
+                if SNPs_FWD == "0 found":
+                    SNPs_FWD = 0
+                # get a list of all the positions found
+                else:
+                    SNPs_FWD_list = SNPs_FWD.replace("{","").replace("}","").split(":")
+                    SNPs_FWD = []
+                    for i in range(0,len(SNPs_FWD_list),2):
+                        SNPs_FWD.append(int(SNPs_FWD_list[i]))
+                SNPs_REV = line[14]
+                # none found
+                if SNPs_REV == "0 found":
+                    SNPs_REV = 0
+                # get a list of all the positions found
+                else:
+                    SNPs_REV_list = SNPs_REV.replace("{","").replace("}","").split(":")
+                    SNPs_REV = []
+                    for i in range(0,len(SNPs_REV_list),2):
+                        SNPs_REV.append(int(SNPs_REV_list[i]))
+            # failed to get the SNPs
+            except:
+                SNP_tag_loose = "error: could not get SNPs"
+                SNP_tag_strict = "error: could not get SNPs"
 
-    # LOOSE
-    def SNP_loose(SNPs, SNP_tag_loose):
-        # if the SNPs are not on position -2,-3 or -4 they pass
-        for i in SNPs:
-            if i in [-2,-3,-4]:
-                SNP_tag = "FAIL"
-        # if it has not yet failed it passes
-        if SNP_tag_loose == "NA":
-            SNP_tag_loose = "PASS"
-        return SNP_tag_loose
+            # LOOSE
+            def SNP_loose(SNPs, SNP_tag_loose):
+                # if the SNPs are not on position -2,-3 or -4 they pass
+                for i in SNPs:
+                    if i in [-2,-3,-4]:
+                        SNP_tag = "FAIL"
+                # if it has not yet failed it passes
+                if SNP_tag_loose != "FAIL":
+                    SNP_tag_loose = "PASS"
+                return SNP_tag_loose
 
-    
-    # STRICT
-    def SNP_strict(SNPs_forward, SNPs_reverse):
-        # if there are any SNPs in the primers: fail
-        if SNPs_FWD == [] and SNPs_REV == []:
-            SNP_tag_strict = "PASS"
-        else:
-            SNP_tag_strict = "FAIL"
-        return SNP_tag_strict
+            
+            # STRICT
+            def SNP_strict(SNPs_forward, SNPs_reverse):
+                # if there are any SNPs in the primers: fail
+                if SNPs_FWD == [] and SNPs_REV == []:
+                    SNP_tag_strict = "PASS"
+                else:
+                    SNP_tag_strict = "FAIL"
+                return SNP_tag_strict
 
-    # loop the found SNPs for that line in the table
-    if SNPs_FWD == 0 and SNPs_REV == 0:
-        SNP_tag_loose = "PASS"
-        SNP_tag_strict = "PASS"
-    else:
-        # strict
-        SNP_tag_strict = SNP_strict(SNPs_FWD, SNPs_REV)
-        # loose
-        if "_F_" in line[0]:
-            SNP_tag_loose = SNP_loose(SNPs_FWD, SNP_tag_loose)
-        elif "_R_" in line[0]:
-            SNP_tag_loose = SNP_loose(SNPs_REV, SNP_tag_loose)
+            # loop the found SNPs for that line in the table
+            if SNPs_FWD == 0 and SNPs_REV == 0:
+                SNP_tag_loose = "PASS"
+                SNP_tag_strict = "PASS"
+            else:
+                # strict
+                SNP_tag_strict = SNP_strict(SNPs_FWD, SNPs_REV)
+                # loose
+                if "_F_" in line[0]:
+                    SNP_tag_loose = SNP_loose(SNPs_FWD, SNP_tag_loose)
+                elif "_R_" in line[0]:
+                    SNP_tag_loose = SNP_loose(SNPs_REV, SNP_tag_loose)
 
-    ################################################################################################
-    ###################################   Secondary structure   ####################################
-    ################################################################################################
-    
-    # if off
-    Sec_str_tag_loose = "NA"
-    Sec_str_tag_strict = "NA"
-    Sec_str_lost = 0
+        ################################################################################################
+        ###################################   Secondary structure   ####################################
+        ################################################################################################
+        
+        # if off
+        Sec_str_tag_loose = "off"
+        Sec_str_tag_strict = "off"
+        Sec_str_lost = 0
 
-    # secondary structure templates
-    try:
-        # forward positions
-        Sec_str_temp_FWD = line[13]
-        if Sec_str_temp_FWD == "0 predicted":
-            Sec_str_temp_FWD = 0
-        else:
-            Sec_str_temp_FWD = Sec_str_temp_FWD.replace("[","").replace("]","").split(",")
-        # deltaG
-        delta_G = float(line[16])
-        # reverse positions
-        Sec_str_temp_REV = line[15]
-        if Sec_str_temp_REV == "0 predicted":
-            Sec_str_temp_REV = 0
-        else:
-            Sec_str_temp_REV = Sec_str_temp_REV.replace("[","").replace("]","").split(",")
-        # amplicon
-        amplicon = line[21]
-        amp_delta_G = float(line[22])
-    except:
-        Sec_str_tag_loose = "error: could not get secondary structure templates"
-        Sec_str_tag_strict
+        # secondary structure templates
+        try:
+            # forward positions
+            Sec_str_temp_FWD = line[13]
+            if Sec_str_temp_FWD == "0 predicted":
+                Sec_str_temp_FWD = 0
+            else:
+                Sec_str_temp_FWD = Sec_str_temp_FWD.replace("[","").replace("]","").split(",")
+            # deltaG
+            delta_G = float(line[16])
+            # reverse positions
+            Sec_str_temp_REV = line[15]
+            if Sec_str_temp_REV == "0 predicted":
+                Sec_str_temp_REV = 0
+            else:
+                Sec_str_temp_REV = Sec_str_temp_REV.replace("[","").replace("]","").split(",")
+            # amplicon
+            amplicon = line[21]
+            amp_delta_G = float(line[22])
+        except:
+            Sec_str_tag_loose = "error: could not get secondary structure templates"
+            Sec_str_tag_strict
 
 
-    # check the template
+        # check the template
 
-    # if the delta G is less than -15 it fails if any structures are found.
-    if delta_G < -15.0:
-        if (Sec_str_temp_FWD != 0 and Sec_str_temp_REV != 0) or (Sec_str_temp_FWD !=[] and Sec_str_temp_REV != []):
-            Sec_str_tag_strict = "FAIL_template"
+        # if the delta G is less than -15 it fails if any structures are found.
+        if delta_G < -15.0:
+            if (Sec_str_temp_FWD != 0 and Sec_str_temp_REV != 0) or (Sec_str_temp_FWD !=[] and Sec_str_temp_REV != []):
+                Sec_str_tag_strict = "FAIL_template"
+            else:
+                Sec_str_tag_strict = "PASS"
         else:
             Sec_str_tag_strict = "PASS"
-    else:
-        Sec_str_tag_strict = "PASS"
-    
+        
 
-    if float(delta_G) < -15:
-        for i in Sec_str_temp_FWD:
-            if i in [-1,-2,-3,-4,-5,-6]:
-                Sec_str_tag_loose = "FAIL_template"
-            else:
-                Sec_str_tag_loose = "PASS"
-    else:
-        Sec_str_tag_loose = "PASS"
+        if float(delta_G) < -15:
+            for i in Sec_str_temp_FWD:
+                if i in [-1,-2,-3,-4,-5,-6]:
+                    Sec_str_tag_loose = "FAIL_template"
+                else:
+                    Sec_str_tag_loose = "PASS"
+        else:
+            Sec_str_tag_loose = "PASS"
 
 
-    # check amplicon
-    if amp_delta_G < -15.0:
-        Sec_str_tag_loose = "FAIL_amplicon"
-        Sec_str_tag_strict = "FAIL_amplicon"
-    else:
-        if amp_delta_G < -5.0:
-            if "(" in  amplicon or ")" in amplicon:
-                Sec_str_tag_loose = "FAIL_amplicon"
-                Sec_str_tag_strict = "FAIL_amplicon"
+        # check amplicon
+        if amp_delta_G < -15.0:
+            Sec_str_tag_loose = "FAIL_amplicon"
+            Sec_str_tag_strict = "FAIL_amplicon"
+        else:
+            if amp_delta_G < -5.0:
+                if "(" in  amplicon or ")" in amplicon:
+                    Sec_str_tag_loose = "FAIL_amplicon"
+                    Sec_str_tag_strict = "FAIL_amplicon"
+                if Sec_str_tag_loose != "FAIL_template":
+                    Sec_str_tag_loose = "PASS"
+                if Sec_str_tag_strict != "FAIL_template":
+                    Sec_str_tag_strict = "PASS"
             if Sec_str_tag_loose != "FAIL_template":
                 Sec_str_tag_loose = "PASS"
             if Sec_str_tag_strict != "FAIL_template":
                 Sec_str_tag_strict = "PASS"
-        if Sec_str_tag_loose != "FAIL_template":
-            Sec_str_tag_loose = "PASS"
-        if Sec_str_tag_strict != "FAIL_template":
-            Sec_str_tag_strict = "PASS"
 
     ################################################################################################
     ###################################   Validation   #############################################
@@ -334,36 +336,37 @@ for line in lines:
     It's more an indication
     """
     # if off
-    validation_tag_loose = "NA"
-    validation_tag_strict = "NA"
+    validation_tag_loose = "off"
+    validation_tag_strict = "off"
     validation_lost = 0
 
-    # get the validation results
-    try:
-        validation_FWD = line[17]
-        validation_REV = line[18]
-    except:
-        validation_tag_loose = "error: could not get validation results"
-        validation_tag_strict = "error: could not get validation results"
-    
-    # strict
-    if validation_FWD != "considered 1, ok 1" or validation_REV != "considered 1, ok 1":
-        validation_tag_strict = "FAIL"
-    else: 
-        validation_tag_strict = "PASS"
+    if validation_filter != "off":
+        # get the validation results
+        try:
+            validation_FWD = line[17]
+            validation_REV = line[18]
+        except:
+            validation_tag_loose = "error: could not get validation results"
+            validation_tag_strict = "error: could not get validation results"
+        
+        # strict
+        if validation_FWD != "considered 1, ok 1" or validation_REV != "considered 1, ok 1":
+            validation_tag_strict = "FAIL"
+        else: 
+            validation_tag_strict = "PASS"
 
-    
-    # loose
-    if "_F_" in line[0]:
-        if validation_FWD != "considered 1, ok 1":
-            validation_tag_loose = "FAIL"
-        else:
-            validation_tag_loose = "PASS"
-    elif "_R_" in line[0]:
-        if validation_REV != "considered 1, ok 1":
-            validation_tag_loose = "FAIL"
-        else:
-            validation_tag_loose = "PASS"
+        
+        # loose
+        if "_F_" in line[0]:
+            if validation_FWD != "considered 1, ok 1":
+                validation_tag_loose = "FAIL"
+            else:
+                validation_tag_loose = "PASS"
+        elif "_R_" in line[0]:
+            if validation_REV != "considered 1, ok 1":
+                validation_tag_loose = "FAIL"
+            else:
+                validation_tag_loose = "PASS"
 
     ################################################################################################
     ###################################   Write the table   ########################################
@@ -416,6 +419,17 @@ table["Sec_str_filter_strict"] = table["Sec_str_filter_strict"].replace("FAIL_am
 # Fails on Validation_filter
 validation_lost_loose = len(table[table["Validation_filter_loose"] == "FAIL"])
 validation_lost_strict = len(table[table["Validation_filter_strict"] == "FAIL"])
+
+# replace off with PASS
+table["Specificity_filter_loose"] = table["Specificity_filter_loose"].replace("off", "PASS")
+table["Specificity_filter_strict"] = table["Specificity_filter_strict"].replace("off", "PASS")
+table["SNP_filter_loose"] = table["SNP_filter_loose"].replace("off", "PASS")
+table["SNP_filter_strict"] = table["SNP_filter_strict"].replace("off", "PASS")
+table["Sec_str_filter_loose"] = table["Sec_str_filter_loose"].replace("off", "PASS")
+table["Sec_str_filter_strict"] = table["Sec_str_filter_strict"].replace("off", "PASS")
+table["Validation_filter_loose"] = table["Validation_filter_loose"].replace("off", "PASS")
+table["Validation_filter_strict"] = table["Validation_filter_strict"].replace("off", "PASS")
+
 # remaining (all passed)
 passed_loose = len(table[(table["Specificity_filter_loose"] == "PASS") & (table["SNP_filter_loose"] == "PASS") & (table["Sec_str_filter_loose"] == "PASS") & (table["Validation_filter_loose"] == "PASS")])
 passed_strict = len(table[(table["Specificity_filter_strict"] == "PASS") & (table["SNP_filter_strict"] == "PASS") & (table["Sec_str_filter_strict"] == "PASS") & (table["Validation_filter_strict"] == "PASS")])
