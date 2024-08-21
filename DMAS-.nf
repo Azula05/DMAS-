@@ -25,7 +25,7 @@ params.outdir = "$projectDir/Output"
 params.index_bowtie = "$projectDir/Assets/GRCh38/Index_bowtie"
 params.index_bowtie_name = "GRCh38_noalt_as"
 // Primer3 settings
-params.primer_settings = "$projectDir/Assets/Primer3_settings.txt"
+params.primer_settings = "$projectDir/Assets/GRCh38/Primer3_settings.txt"
 // SNP database
 params.snp_url = 'http://hgdownload.soe.ucsc.edu/gbdb/hg38/snp/dbSnp155Common.bb'
 // Primer3 parameters:
@@ -53,8 +53,17 @@ params.sec_str_filter = 'loose'
 params.validation_filter = 'loose'
 // coordinates included in input file
 params.coords = true
+
 // help message
 params.help = false
+
+// number of CPUs
+params.cpus = 3
+
+// required parameters
+input_file = file(params.input)
+index_bowtie = file(params.index_bowtie)
+primer_settings = file(params.primer_settings)
 
 /*
 ====================================================================================================
@@ -67,7 +76,7 @@ def helpMessage() {
 	Usage:
 	
 	The typical command for running the pipeline is as follows (standard = default parameters):
-	nextflow run DMAS.nf -profile standard --input template.txt
+	nextflow run DMAS.nf -profile standard --input template.txt --cpus 3
 	
 	Mandatory nextflow arguments:
 	-profile 		set to 'local' when running locally, set to 'singularity' when running on the HPC
@@ -80,12 +89,17 @@ def helpMessage() {
 
 	Optional pipeline arguments:
 	  --coords			true if the input file contains coordinates, false if not (default: true)
+	  --cpus			number of CPUs to use in bowtie2 (default: 3) => IMPORTANT: this parameter should be set to the number of CPUs available on the system
+
 	Optional arguments:
 	  --primer_settings	path to file with primer3 settings (see primer3 manual)
 	  --snp_url			SNP database URL (default: Homo sapiens hg38)
-	  --spec_filter		stringency of filtering primer specificity, can be set to 'strict' or 'loose' (default: strict)
-	  --upfront_filter	When set to 'yes', SNPs and secundary structures are avoided before primer design; when set to 'str', secundary structures are avoided before primer design; when set to 'snp', snp are avoided before primer design; when set to 'no', no filtering before primer design is performed (default: yes)
-
+	  --spec_filter		stringency of filtering primer specificity, can be set to 'strict', 'loose' or 'off' (default: loose) => Turn of to run pipeline fast
+	  --snp_filter		when set to 'strict', no common SNPs are allowed in primer sequence; when set to 'loose', no SNPs are allowed on position -2,-3,-4, can be turned off with "off"
+	  --snp_url			when using a differente species than human, the correct SNP database url should be provided; alternatively, this paramater can be set to 'off' if no SNP database is available
+	  --sec_str_filter	when set to 'strict', no secondary structure elements are allowed in primer sequence; when set to 'loose', no secondary structure elements are allowed on position -2,-3,-4,-5,-6 can be turned off with "off"
+	  --validation_filter when set to 'strict', both primers need to pass the validation; when set to 'loose', only the specific primer needs to pass the validation; can be turned off with "off"
+	  
 	  Primer3 settings:
 		--primer3_diff	the minimum number of base pairs between the 3' ends of any two left primers (see also primer3 PRIMER_MIN_LEFT_THREE_PRIME_DISTANCE)
 		--primer3_nr	number of primers to return (default: 20)
@@ -100,11 +114,6 @@ def helpMessage() {
 		--amp_max		max amplicon length (default: 150)
 		--mis_lib		fasta file with mispriming library (default: humrep_and_simple)
 		--max_mis_lib	max allowed weighted similarity with any sequence in mispriming library file (default: 12)
-	--spec_filter		when set to 'strict', more mismatches are required to be unspecific; when set to 'loose', less mismatches are required to be unspecific; can be turned off with "off" => trunging this off will run the pipeline faster
-	--snp_filter		when set to 'strict', no common SNPs are allowed in primer sequence; when set to 'loose', no SNPs are allowed on position -2,-3,-4, can be turned off with "off"
-	--snp_url			when using a differente species than human, the correct SNP database url should be provided; alternatively, this paramater can be set to 'off' if no SNP database is available
-	--sec_str_filter	when set to 'strict', no secondary structure elements are allowed in primer sequence; when set to 'loose', no secondary structure elements are allowed on position -2,-3,-4,-5,-6 can be turned off with "off"
-	--validation_filter when set to 'strict', both primers need to pass the validation; when set to 'loose', only the specific primer needs to pass the validation; can be turned off with "off"
 	"""
 }
 
@@ -185,9 +194,11 @@ PROCESS 1 - splitting input file
 // channels
 input_file_handle = channel.fromPath(params.input)
 
+
 // process
 process splitInput {
 	tag "Splitting input file"
+	cpus = params.cpus
 
 	input:
 	path('input_file_handle')
