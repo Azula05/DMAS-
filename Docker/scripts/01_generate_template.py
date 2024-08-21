@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 This script is used to generate files from user input. The user input file is a text file that contains the following
 information:
