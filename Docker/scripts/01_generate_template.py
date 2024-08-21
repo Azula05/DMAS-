@@ -31,8 +31,6 @@ usr_input_file = open(args.i[0]).readlines()
 #######################################################################################################################
 ####################################### COORDINATES ARE MANUALLY PROVIDED #############################################
 #######################################################################################################################
-# create a warnings file
-warning_file = open("warning.txt", "a")
 
 if coords == "true":
     seq_ID_nr = 0
@@ -67,6 +65,8 @@ if coords == "true":
         seq_file.close()
         # Add warning if the sequence is shorter than 150 nt
         if len(sequence) < 150:
+            # create a warnings file
+            warning_file = open("warning_DMAS-" + seq_ID_nr +".txt", "a")
             warning_file.write("Warning: Input sequence " + str(seq_ID_nr) + " is shorter than 150 nt.\n")
         # increment the sequence ID number
         seq_ID_nr = seq_ID_nr + 1

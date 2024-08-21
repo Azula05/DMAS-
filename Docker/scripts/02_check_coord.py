@@ -8,10 +8,16 @@ An error message will be given and the script will exit.
 # ARGUMENT HANDLING
 import argparse
 import requests
+import os
+
 argparser = argparse.ArgumentParser(description="give arguments to check the coordinates")
 argparser.add_argument("-i", nargs=1, required=True, help="generated DMAS- input file")
 args = argparser.parse_args()
 file = open(args.i[0]).readlines()
+
+# SEQUENCE ID
+seq_ID = os.path.splitext(args.i[0])[0]
+seq_ID = seq_ID.split("/")[-1]
 
 # PARSE THE FILE
 for line in file:
@@ -53,4 +59,4 @@ for line in file:
         exit(message)
     ## add message to warnings if the sequences match
     else:
-        open("warning.txt", "a").write("The sequence and the coordinates match for "+ str(args.i[0]) +"\n")
+        open("warning" + seq_ID + ".txt", "a").write("The sequence and the coordinates match for "+ str(args.i[0]) +"\n")
