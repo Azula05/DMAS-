@@ -114,7 +114,7 @@ elif coords == 'false':
         if length == "*":
             fails.append(seq_ID)
 
-        length = int(re.split("(\d+)", length)[1])  # split between numbers and letters
+        length = int(re.split(r"(\d+)", length)[1])  # split between numbers and letters
         end = start + length - 1
         sam_dict[seq_ID] = chrom + ":" + str(start) + '-' + str(end)
 
