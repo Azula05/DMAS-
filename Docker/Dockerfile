@@ -44,10 +44,6 @@ RUN chmod +x bigBedToBed
 # install bowtie2
 RUN apt-get install -y bowtie2
 
-# scripts
-WORKDIR /
-ADD scripts /usr/bin
-RUN chmod +x /usr/bin/01_generate_template.py /usr/bin/02_check_coord.py /usr/bin/03_get_sec_str_temp_ViennaRNA.py /usr/bin/04_get_SNPs.py /usr/bin/05_primer_generation.py /usr/bin/06_Primer3_common_primer.py /usr/bin/07_primer_validation.py /usr/bin/08_get_sec_str_amp_ViennaRNA.py /usr/bin/09_primer_specificity.py /usr/bin/10_filter.py
 
 # ViennaRNA (RNAfold)
 WORKDIR /bin
@@ -64,4 +60,7 @@ RUN rm -rf ViennaRNA-2.6.4 ViennaRNA-2.6.4.tar.gz
 RUN apt-get install -y bedtools
 RUN rm -rf /var/lib/a
 
+# scripts
 WORKDIR /
+ADD scripts /usr/bin
+RUN chmod +x /usr/bin/01_generate_template.py /usr/bin/02_check_coord.py /usr/bin/03_get_sec_str_temp_ViennaRNA.py /usr/bin/04_get_SNPs.py /usr/bin/05_primer_generation.py /usr/bin/06_Primer3_common_primer.py /usr/bin/07_primer_validation.py /usr/bin/08_get_sec_str_amp_ViennaRNA.py /usr/bin/09_primer_specificity.py /usr/bin/10_filter.py
