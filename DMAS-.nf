@@ -31,6 +31,7 @@ params.snp_url = 'http://hgdownload.soe.ucsc.edu/gbdb/hg38/snp/dbSnp155Common.bb
 // Primer3 parameters:
 params.primer3_diff = 1		// primer min left 3 prime distance
 params.primer3_nr = 20		// number of primers to return
+params.min_left_prime = 1	// min left primer distance
 // Primer Tm parameters:
 params.diff_tm = 2			// melting temp difference between primers
 params.min_tm = 58			// min melting temp
@@ -41,11 +42,20 @@ params.min_gc = 30			// min GC content
 params.opt_gc = 50			// optimal GC content
 params.max_gc = 80			// max GC content
 // Amplicon length parameters:
-params.amp_min = 60			// min amplicon length
+params.amp_min = 50			// min amplicon length
 params.amp_max = 150 		// max amplicon length
 // mispriming library
-params.mis_lib = "$projectDir/Assets/humrep_and_simple.txt"		// mispriming library
+params.mis_lib = "$projectDir/Assets/GRCh38/humrep_and_simple.txt"		// mispriming library
 params.max_mis_lib = 12		// max mispriming library
+// salt conentrations
+params.dnac = 250
+params.na = 50
+params.k = 0
+params.tris =75 
+params.mg = 3 
+params.dNTPs = 1.2
+params.position = "all"
+params.single_MM_Tm = 55
 // filters
 params.snp_filter = 'loose'
 params.spec_filter = 'loose'
@@ -101,20 +111,31 @@ def helpMessage() {
 	  --sec_str_filter	when set to 'strict', no secondary structure elements are allowed in primer sequence; when set to 'loose', no secondary structure elements are allowed on position -2,-3,-4,-5,-6 can be turned off with "off"
 	  --validation_filter when set to 'strict', both primers need to pass the validation; when set to 'loose', only the specific primer needs to pass the validation; can be turned off with "off"
 	  
-	  Primer3 settings:
-		--primer3_diff	the minimum number of base pairs between the 3' ends of any two left primers (see also primer3 PRIMER_MIN_LEFT_THREE_PRIME_DISTANCE)
-		--primer3_nr	number of primers to return (default: 20)
-		--min_tm		min melting temp (default: 58)
-		--max_tm		max melting temp (default: 60)
-		--opt_tm		optimal melting temp (default: 59)
-		--diff_tm		melting temp difference between primers (default: 2)
-		--min_gc		min GC content (default: 30)
-		--max_gc		max GC content (default: 80)
-		--opt_gc		optimal GC content (default: 50)
-		--amp_min		min amplicon length (default: 50)
-		--amp_max		max amplicon length (default: 150)
-		--mis_lib		fasta file with mispriming library (default: humrep_and_simple)
-		--max_mis_lib	max allowed weighted similarity with any sequence in mispriming library file (default: 12)
+	Primer3 settings:
+	  --primer3_diff	the minimum number of base pairs between the 3' ends of any two left primers (see also primer3 PRIMER_MIN_LEFT_THREE_PRIME_DISTANCE)
+	  --primer3_nr		number of primers to return (default: 20)
+	  --min_left_prime = 1 min left primer distance
+	  --min_tm			min melting temp (default: 58)
+	  --max_tm			max melting temp (default: 60)
+	  --opt_tm			optimal melting temp (default: 59)
+	  --diff_tm			melting temp difference between primers (default: 2)
+	  --min_gc			min GC content (default: 30)
+	  --max_gc			max GC content (default: 80)
+	  --opt_gc			optimal GC content (default: 50)
+	  --amp_min			min amplicon length (default: 50)
+	  --amp_max			max amplicon length (default: 150)
+	  --mis_lib			fasta file with mispriming library (default: humrep_and_simple)
+	  --max_mis_lib		max allowed weighted similarity with any sequence in mispriming library file (default: 12)
+	
+	Temperature prediction:
+	  --dnac			DNA concentration nM 	(default: 250)
+	  --na				Na+ concentration mM 	(default: 50)
+	  --k				K+ concentration mM 	(default: 0)
+	  --tris			Tris concentration mM 	(default: 75)
+	  --mg				Mg2+ concentration mM	(default: 3)
+	  --dNTPs			dNTPs concentration mM	(default: 1.2)
+	  --position		2,3,4 or 'all' 			(default: all)
+	  --single_MM_Tm	melting temperature for single mismatches °C (default: 55)
 	"""
 }
 
@@ -131,6 +152,8 @@ if (!file(params.input).exists()) {exit 1, "Input file not found: ${params.input
 if (!file(params.outdir).exists()) {exit 1, "Output directory not found: ${params.outdir}"}
 // --primer_settings
 if (!file(params.primer_settings).exists()) {exit 1, "Primer3 settings file not found: ${params.primer_settings}"}
+// --mismatch library
+if (!file(params.mis_lib).exists()) {exit 1, "Mispriming library file not found: ${params.mis_lib}"}
 // --index_bowtie
 if (!file(index_bowtie).exists()) {exit 1, "Index file not found: ${index_bowtie}"}
 // --primer3_diff
@@ -174,6 +197,12 @@ if (params.sec_str_filter != "strict" && params.sec_str_filter != 'loose' && par
 // --validation_filter
 if (params.validation_filter != "strict" && params.validation_filter != 'loose' && params.validation_filter != 'off'){
 	exit 1, "Invalid validation filter: ${params.validation_filter}. Valid options: 'strict','loose','off'."}
+// --position
+if (params.position != "2" && params.position != '3' && params.position != '4' && params.position != 'all'){
+	exit 1, "Invalid position: ${params.position}. Valid options: 2,3,4,'all'."
+}
+// --single_MM_Tm
+if (!params.single_MM_Tm.toString().isNumber()) {exit 1, " single_MM_Tm: ${params.single_MM_Tm}. Valid options: any integer > 0."}
 
 log.info """\
 ==============================================
@@ -197,17 +226,21 @@ input_file_handle = channel.fromPath(params.input)
 
 
 // process
+def input_file_handle = file(params.input)
+
 process splitInput {
+	publishDir "$params.outdir", mode: 'copy', overwrite: false, pattern : 'warning_*.txt'
+
 	tag "Splitting input file"
 	cpus = params.cpus
 
 	input:
-	path('input_file_handle')
+	path(input_file_handle)
 	path(bowtie_index)
 
 	output:
-	path 'DMAS-*'
-	path 'start_time.txt'
+	path('DMAS-*.txt')
+	path('start_time.txt')
 	"""
 	01_generate_template.py -c $params.coords -i $input_file_handle -p ${task.cpus} -b $bowtie_index/$params.index_bowtie_name
 	python3 -c 'from datetime import datetime; print(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))' > start_time.txt
@@ -225,6 +258,8 @@ other species, the pipeline can be run for other species as well.
 */
 
 process checkCoordinates {
+	publishDir "$params.outdir", mode: 'copy', overwrite: false, pattern : 'warningDMAS-*.txt'
+
 	tag "Checking coordinates"
 	cpus = params.cpus
 
@@ -232,7 +267,7 @@ process checkCoordinates {
 	path(ind_dmas_file_handle)
 
 	output:
-	path 'warning.txt'
+	path 'warningDMAS-*.txt'
 
 	when: params.coords == true && params.species == 'human'
 	when: params.species == 'human'
@@ -287,6 +322,90 @@ process findSNPs {
 
 /*
 ====================================================================================================
+PROCESS 5 - Primer generation
+====================================================================================================
+*/
+
+process primerGeneration {
+	tag "Creating specific primers"
+
+	input:
+	path(ind_dmas_file_handle)
+
+	output:
+	tuple val("${ind_dmas_file_handle.getBaseName()}"), path('DMAS-*_primers.tsv')
+
+	script:
+	"""
+	05_primer_generation.py -dnac $params.dnac -Na $params.na -K $params.k -Tris $params.k -Mg $params.mg -dNTPs $params.dNTPs -t $ind_dmas_file_handle -p $params.position -S $params.single_MM_Tm
+	"""
+}
+
+/*
+====================================================================================================
+PROCESS 6 - Common primer generation
+====================================================================================================
+*/
+process createTuple {
+	tag "Creating tuple"
+
+	input:
+	path(ind_dmas_file_handle)
+
+	output:
+	tuple val("${ind_dmas_file_handle.getBaseName()}"), path('DMAS-*.tsv')
+
+	script:
+	"""
+	cat $ind_dmas_file_handle > ${ind_dmas_file_handle.getBaseName()}.tsv
+	"""
+}
+
+process commonPrimer {
+	tag "Creating common primers"
+
+	input:
+	path(mis_lib_file)
+	tuple val(dmas_id),path(ind_dmas_file_handle), path(ind_dmas_table_handle), path(ind_dmas_snp_handle)
+	path(primer3_settings)
+
+	output:
+	tuple val(dmas_id), path('Common_FWD.txt')
+	tuple val(dmas_id), path('Common_REV.txt')
+
+	script:
+	"""
+	06_Primer3_common_primer.py -a $params.min_left_prime -b $params.primer3_nr -c $params.min_tm -d $params.max_tm -e $params.opt_tm -f $params.diff_tm -g $params.min_gc -i $params.max_gc -j $params.opt_gc -k $params.amp_min -l $params.amp_max -m $mis_lib_file -M $params.max_mis_lib -dnac $params.dnac -Na $params.na -K $params.k -Tris $params.tris -Mg $params.mg -dNTPs $params.dNTPs -t $ind_dmas_file_handle -p $ind_dmas_table_handle -s $ind_dmas_snp_handle
+	primer3_core -p3_settings_file=$primer3_settings < ./Primer3_DMAS-*_common_primer_REV.txt > Common_REV.txt
+	primer3_core -p3_settings_file=$primer3_settings < ./Primer3_DMAS-*_common_primer_FWD.txt > Common_FWD.txt
+	"""
+}
+
+/*
+====================================================================================================
+PROCESS 6 - Common primer generation
+====================================================================================================
+*/
+
+process primerValidation {
+	tag "Validating primers"
+
+	input:
+	path(primer3_settings)
+	tuple val(dmas_id), path(ind_dmas_file_handle), path(ind_dmas_table_handle), path(ind_snp_file), path(temp_sec_str_wt), path(temp_sec_str_mut), path(common_FWD),path(common_REV)
+
+	output:
+	tuple val(dmas_id), path('DMAS-*_primer_validated.tsv')
+	tuple val(dmas_id), path('DMAS-*_common_alternatives.txt')
+
+	script:
+	"""
+	07_primer_validation.py -F $common_FWD -R $common_REV -T $ind_dmas_file_handle -s $ind_snp_file -u $temp_sec_str_wt -U $temp_sec_str_mut -o $ind_dmas_table_handle -p $primer3_settings -q yes
+	"""
+}
+
+/*
+====================================================================================================
 THE WORKFLOW
 ====================================================================================================
 */
@@ -295,10 +414,12 @@ workflow {
 	splitInput(
 		input_file_handle,
 		params.index_bowtie)
+
 	// process 2
 	checkCoordinates(
 		splitInput.out[0].flatten()
 	)
+
 	// process 3
 	sec_str_temp(
 		splitInput.out[0].flatten()
@@ -306,6 +427,24 @@ workflow {
 	// process 4
 	findSNPs(
 		splitInput.out[0].flatten()
+	)
+	// process 5
+	primerGeneration(
+		splitInput.out[0].flatten()
+	)
+	// process 6
+	createTuple(
+		splitInput.out[0].flatten()
+	)
+	commonPrimer(
+		params.mis_lib,
+		createTuple.out[0].join(primerGeneration.out[0]).join(findSNPs.out[0]).groupTuple(),
+		params.primer_settings
+	)
+	// process 7
+	primerValidation(
+		params.primer_settings,
+		createTuple.out[0].join(primerGeneration.out[0]).join(findSNPs.out[0]).join(sec_str_temp.out[0]).join(sec_str_temp.out[1]).join(commonPrimer.out[0]).join(commonPrimer.out[1]).groupTuple()
 	)
 }
 
