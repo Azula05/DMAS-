@@ -36,7 +36,7 @@ file_structures_mut = args.U[0]
 file_output = args.o[0]
 primer3_settings= args.p[0]
 # get the ID from the file
-ID = file_template.split("_")[0].replace(".txt", "")
+ID = file_template.split("_")[0].replace(".tsv", "")
 ID = ID.split("/")[-1]
 # upfront check
 checks = args.q[0]
