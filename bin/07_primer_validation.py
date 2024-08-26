@@ -531,5 +531,6 @@ output.close()
 df = pd.read_csv(file_output, sep='\t')
 new_order = ["Name","Specific_primer","Match_Tm","Single_MM_Tm","Double_MM_Tm","MM_delta","GC%","Lenght","Common_primer","Match_Tm_common","GC%_common","Length_common","SNPs_FWD","Sec_str_FWD","SNPs_REV","Sec_str_REV","DeltaG","FWD_validation","REV_validation","Amplicon","Amp_length"]
 df = df[new_order]
+ID = ID.replace(".txt", "")
 name = ID + "_primer_validated.tsv"
 df.to_csv(name, sep='\t', index=False)
