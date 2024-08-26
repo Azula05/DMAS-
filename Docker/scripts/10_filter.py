@@ -391,9 +391,9 @@ for line in lines:
     # drop the last 2 columns
     line = line[:-2]
     #Filtered table
-    if Specificity_tag_loose== "PASS" and SNP_tag_loose == "PASS" and Sec_str_tag_loose == "PASS" and validation_tag_loose == "PASS":
+    if (Specificity_tag_loose== "PASS" or Specificity_tag_loose == "off" ) and (SNP_tag_loose == "PASS" or SNP_tag_loose == "off") and (Sec_str_tag_loose == "PASS" or Sec_str_tag_loose == "off" ) and (validation_tag_loose == "PASS" or validation_tag_loose == "off" ):
         filtered_table_loose.write("\t".join(line) + "\n")
-    if Specificity_tag_strict == "PASS" and SNP_tag_strict == "PASS" and Sec_str_tag_strict == "PASS" and validation_tag_strict == "PASS":
+    if (Specificity_tag_strict == "PASS" or Specificity_tag_strict == "off" ) and (SNP_tag_strict == "PASS" or SNP_tag_strict == "off" ) and (Sec_str_tag_strict == "PASS" or Sec_str_tag_strict == "off" ) and (validation_tag_strict == "PASS" or validation_tag_strict == "off" ):
         filtered_table_strict.write("\t".join(line) + "\n")
 
 full_table.close()
