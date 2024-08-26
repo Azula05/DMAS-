@@ -303,11 +303,21 @@ for line in lines:
         
 
         if float(delta_G) < -15:
-            for i in Sec_str_temp_FWD:
-                if i in [-1,-2,-3,-4,-5,-6]:
-                    Sec_str_tag_loose = "FAIL_template"
-                else:
-                    Sec_str_tag_loose = "PASS"
+            if Sec_str_temp_FWD != 0 and Sec_str_temp_REV != 0:
+                if "_F_" in line[0]:
+                    for i in Sec_str_temp_FWD:
+                        if i in [-1,-2,-3,-4,-5,-6]:
+                            Sec_str_tag_loose = "FAIL_template"
+                        else:
+                            Sec_str_tag_loose = "PASS"
+                elif "_R_" in line[0]:
+                    for i in Sec_str_temp_REV:
+                        if i in [-1,-2,-3,-4,-5,-6]:
+                            Sec_str_tag_loose = "FAIL_template"
+                        else:
+                            Sec_str_tag_loose = "PASS"
+            else:
+                Sec_str_tag_loose = "PASS"
         else:
             Sec_str_tag_loose = "PASS"
 
