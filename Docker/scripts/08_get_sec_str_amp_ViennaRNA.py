@@ -23,7 +23,7 @@ with open(input_file, 'r') as input:
     lines = input.readlines()
 input.close()
 ## Rewrite the file
-name = id + "primers_val_amp.tsv"
+name = id + "_primers_val_amp.tsv"
 with open(name, 'w') as output:
     line_nr = 0
     for line in lines:
