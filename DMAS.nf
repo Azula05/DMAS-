@@ -229,7 +229,7 @@ input_file_handle = channel.fromPath(params.input)
 def input_file_handle = file(params.input)
 
 process splitInput {
-	publishDir "$params.outdir", mode: 'copy', overwrite: false, pattern : 'warning_*.txt'
+	publishDir "$params.outdir/warnings", mode: 'copy', overwrite: false, pattern : 'warning_*.txt'
 
 	tag "Splitting input file"
 	cpus = params.cpus
@@ -241,9 +241,12 @@ process splitInput {
 	output:
 	path('DMAS-*.txt')
 	path('start_time.txt')
+	path('DMAS_log.txt')
+
 	"""
 	01_generate_template.py -c $params.coords -i $input_file_handle -p ${task.cpus} -b $bowtie_index/$params.index_bowtie_name
 	python3 -c 'from datetime import datetime; print(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))' > start_time.txt
+	echo "Name	Total	Specificity_loose	Specificity_strict	SNP_loose	SNP_strict	Sec_str_loose	Sec_str_strict	Sec_str_amp_loose	Sec_str_amp_strict	Validation_loose	Validation_strict	Pass_loose	Pass_strict" > DMAS_log.txt
 	"""
 }
 
@@ -258,7 +261,7 @@ other species, the pipeline can be run for other species as well.
 */
 
 process checkCoordinates {
-	publishDir "$params.outdir", mode: 'copy', overwrite: false, pattern : 'warningDMAS-*.txt'
+	publishDir "$params.outdir/warnings", mode: 'copy', overwrite: false, pattern : 'warningDMAS-*.txt'
 
 	tag "Checking coordinates"
 	cpus = params.cpus
@@ -383,11 +386,12 @@ process commonPrimer {
 
 /*
 ====================================================================================================
-PROCESS 6 - Common primer generation
+PROCESS 7 - Validate primers
 ====================================================================================================
 */
 
 process primerValidation {
+	publishDir "$params.outdir/common_alternatives", mode: 'copy', overwrite: false, pattern : 'DMAS-*_common_alternatives.txt'
 	tag "Validating primers"
 
 	input:
@@ -403,6 +407,84 @@ process primerValidation {
 	07_primer_validation.py -F $common_FWD -R $common_REV -T $ind_dmas_file_handle -s $ind_snp_file -u $temp_sec_str_wt -U $temp_sec_str_mut -o $ind_dmas_table_handle -p $primer3_settings -q yes
 	"""
 }
+
+/*
+====================================================================================================
+PROCESS 8 - Get secondary structure of the amplicon
+====================================================================================================
+*/
+
+process sec_str_amp{
+
+	tag "Checking secondary structure of the amplicon"
+
+	input:
+	tuple val(dmas_id), path(ind_dmas_table_handle)
+
+	output:
+	tuple val(dmas_id), path('DMAS-*_primers_val_amp.tsv')
+
+	script:
+	"""
+	08_get_sec_str_amp_ViennaRNA.py -i $ind_dmas_table_handle
+	"""
+}
+
+/*
+====================================================================================================
+PROCESS 9 - Check the specificity of the primers
+====================================================================================================
+*/
+
+process spec_primer {
+	cpus params.cpus
+	maxForks 1
+
+	tag "Checking the specificity of the primers"
+
+	input:
+	path(bowtie_index)
+	tuple val(dmas_id), path(ind_dmas_table_handle)
+
+	output:
+	tuple val(dmas_id), path('DMAS-*_primers_spec.tsv')
+
+	script:
+	"""
+	09_primer_specificity.py -b $bowtie_index/$params.index_bowtie_name -t $params.cpus -s $params.spec_filter -i $ind_dmas_table_handle
+	"""
+}
+
+/*
+====================================================================================================
+PROCESS 10 - Filter the table based on the different filter parameters
+====================================================================================================
+*/
+
+process filters {
+	publishDir "$params.outdir", mode: 'copy', overwrite: true, pattern : 'DMAS_log.txt'
+	publishDir "$params.outdir", mode: 'copy', overwrite: true, pattern : 'DMAS-*_primers.tsv'
+	publishDir "$params.outdir/Filtered", mode: 'copy', overwrite: true, pattern : 'DMAS-*_filtered_loose.tsv'
+	publishDir "$params.outdir/Filtered", mode: 'copy', overwrite: true, pattern : 'DMAS-*_filtered_strict.tsv'
+
+	tag "Filtering primers"
+
+	input:
+	tuple val(dmas_id), path(ind_dmas_file_handle), path(ind_dmas_table_handle)
+	path(log_file)
+
+	output:
+	path('DMAS_log.txt')
+	tuple val(dmas_id), path('DMAS-*_filtered_loose.tsv')
+	tuple val(dmas_id), path('DMAS-*_filtered_strict.tsv')
+	tuple val(dmas_id), path('DMAS-*_primers.tsv')
+
+	script:
+	"""
+	10_filter.py -i $ind_dmas_file_handle -p $ind_dmas_table_handle -s $params.spec_filter -S $params.snp_filter -t $params.sec_str_filter -v $params.validation_filter -l $log_file
+	"""
+}
+
 
 /*
 ====================================================================================================
@@ -445,6 +527,20 @@ workflow {
 	primerValidation(
 		params.primer_settings,
 		createTuple.out[0].join(primerGeneration.out[0]).join(findSNPs.out[0]).join(sec_str_temp.out[0]).join(sec_str_temp.out[1]).join(commonPrimer.out[0]).join(commonPrimer.out[1]).groupTuple()
+	)
+	// process 8
+	sec_str_amp(
+		primerValidation.out[0]
+	)
+	// process 9
+	spec_primer(
+		params.index_bowtie,
+		sec_str_amp.out[0]
+	)
+	// process 10
+	filters(
+		createTuple.out[0].join(spec_primer.out[0]).groupTuple(),
+		splitInput.out[2]
 	)
 }
 
