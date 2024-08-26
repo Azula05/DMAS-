@@ -23,7 +23,8 @@ with open(input_file, 'r') as input:
     lines = input.readlines()
 input.close()
 ## Rewrite the file
-with open(input_file, 'w') as output:
+name = id + "primers_val_amp.tsv"
+with open(name, 'w') as output:
     line_nr = 0
     for line in lines:
         # Write the header
