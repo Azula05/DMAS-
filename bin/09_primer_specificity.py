@@ -35,7 +35,7 @@ with open(primers_file,'r') as table:
 table.close()
 # rewrite the table with the new columns
 id = primers_file.split('_')[0]
-name = id + "_primers_spec.tsv"
+name = id + "_primers.tsv"
 output_file = open(name, 'w')
 # wtite the header
 output_file.write("Name\tSpecific_primer\tMatch_Tm\tSingle_MM_Tm\tDouble_MM_Tm\tMM_delta\tGC%\tLenght\tCommon_primer\tMatch_Tm_common\tGC%_common\tLength_common\tSNPs_FWD\tSec_str_FWD\tSNPs_REV\tSec_str_REV\tDeltaG_template\tFWD_validation\tREV_validation\tAmplicon\tAmp_length\tPredicted_structure\tAmplicon_delta_G\tForward_specificity\tReverse_specificity\n")    
