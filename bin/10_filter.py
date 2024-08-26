@@ -34,11 +34,13 @@ with open(primers_file,'r') as table:
     lines = table.readlines()
 table.close()
 
-# write a new table
-full_table = open(primers_file, 'w')
 # get the sequence ID
 seq_ID = os.path.splitext(args.i[0])[0]
+seq_ID = seq_ID.split("_")[0]
 seq_ID = seq_ID.split("/")[-1]
+# write a new table
+name = seq_ID + "_primers.tsv"
+full_table = open(primers_file, 'w')
 # create a filtered table
 filtered_table_loose = open(seq_ID + "_filtered_loose.tsv", 'w')
 filtered_table_strict = open(seq_ID + "_filtered_strict.tsv", 'w')
