@@ -194,6 +194,8 @@ for line in lines:
     SNP_tag_strict = "off"
     SNP_lost = 0
 
+    SNPs_FWD = []
+    SNPs_REV = []
     if SNP_filter != "off":
         if SNP_filter != "off":
             # get the found SNPs
