@@ -457,12 +457,16 @@ def check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_
     for position,snip in SNP_avoid_range.items():
         if position == "\n" or snip =="\n":
             continue
-        if position >= reverse_end+1 - len(reverse) and position <= reverse_end:
-            SNPs_REV[position-reverse_end] = snip
+        else:
+            if position >= reverse_end+1 - len(reverse) and position <= reverse_end:
+                SNPs_REV[position-reverse_end] = snip
     for position in sec_str_avoid_range.replace("[", "").replace("]", "").split(","):
-        position = int(position)
-        if position >= reverse_end+1 - len(reverse) and position <= reverse_end:
-            sec_REV.append(position-reverse_end)
+        if position == "\n":
+            continue
+        else:
+            position = int(position)
+            if position >= reverse_end+1 - len(reverse) and position <= reverse_end:
+                sec_REV.append(position-reverse_end)
     if not SNPs_REV:
         SNPs_REV = "0 found"
     if sec_REV == []:
