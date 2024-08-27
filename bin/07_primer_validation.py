@@ -417,18 +417,27 @@ if checks == "yes" or checks =="YES" or checks == "str" or checks == "STR":
 def get_amplicon(template, forward_primer, reverse_primer):
     # Find the start position of the forward primer
     forward_start = template.find(forward_primer)
-    if forward_start == -1:
-        raise ValueError("Forward primer not found in template sequence")
+    old_forward_start = 0
+    if forward_start > old_forward_start:
+        old_forward_start = forward_start
+    else:
+        forward_start = old_forward_start
+
+    #if forward_start == 0:
+    #    raise ValueError("Forward primer not found in template sequence")
     
     # Find the start position of the reverse primer (on the reverse complement strand)
     reverse_complement = str(Seq(reverse_primer).reverse_complement())
     reverse_start = template.find(reverse_complement)
     reverse_end = reverse_start + len(reverse_complement)
-    if reverse_start == -1:
-        raise ValueError("Reverse primer not found in template sequence")
+    #if reverse_start == -1:
+    #    raise ValueError("Reverse primer not found in template sequence")
     
     # Extract the amplicon
-    amplicon = template[forward_start:reverse_start + len(reverse_complement)]
+    try:
+        amplicon = template[forward_start:reverse_start + len(reverse_complement)]
+    except:
+        amplicon = "NA"
     return amplicon, forward_start, reverse_end
 
 # function to check the primers
@@ -483,7 +492,7 @@ with open(file_output, 'w') as output:
     for line in lines:
         line = line.rstrip().split("\t")
         # check FWD WT 
-        if "_F_WT" in line[0]:
+        if re.search(r"DMAS-\d+_\w+_F_WT",line[0]):
             # get the amplicon and primer positions
             changed_L, changed_R = template_adaptation(left, right ,line[0])
             template = changed_L + wt + right
@@ -494,9 +503,10 @@ with open(file_output, 'w') as output:
             SNPs_FWD, sec_FWD, SNPs_REV, sec_REV = check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_avoid_range_wt)
             # write the line to the output file
             output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(deltaG_wt) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
+            continue
 
         # check REV WT
-        if "_R_WT" in line[0]:
+        if re.search(r"DMAS-\d+_\w+_R_WT",line[0]):
             # get the amplicon and primer positions
             changed_L, changed_R = template_adaptation(left, right ,line[0])
             template = left + wt + changed_R
@@ -508,7 +518,7 @@ with open(file_output, 'w') as output:
             # write the line to the output file
             output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(deltaG_wt) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
         # check FWD MUT
-        if "_F_MUT" in line[0]:
+        if re.search(r"DMAS-\d+_\w+_F_MUT",line[0]):
             # get the amplicon and primer positions
             changed_L, changed_R = template_adaptation(left, right ,line[0])
             template_MUT = changed_L + m + right
@@ -520,7 +530,7 @@ with open(file_output, 'w') as output:
             # write the line to the output file
             output.write("\t".join(line) + "\t" + str(SNPs_FWD) + "\t" + str(sec_FWD) + "\t" + str(SNPs_REV)+ "\t" + str(sec_REV) + "\t" + str(deltaG_mut) + "\t" + str(amplicon) + "\t" + str(len(amplicon)) + "\n")
         # check REV MUT
-        if "R_MUT" in line[0]:
+        if re.search(r"DMAS-\d+_\w+_R_MUT",line[0]):
             # get the amplicon and primer positions
             changed_L, changed_R = template_adaptation(left, right ,line[0])
             template_MUT = left + m + changed_R
