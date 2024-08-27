@@ -439,8 +439,11 @@ def check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_
     for position,snip in SNP_avoid_range.items():
         if position >= forward_start and position <= (forward_start + len(forward)):
             SNPs_FWD[position-position_of_interest] = snip
+    
     for position in sec_str_avoid_range.replace("[", "").replace("]", "").split(","):
-        if position != "\n":
+        if position == "\n":
+            continue
+        else:
             position = int(position)
             if position >= forward_start and position <= (forward_start + len(forward)):
                 sec_FWD.append(position-position_of_interest)
