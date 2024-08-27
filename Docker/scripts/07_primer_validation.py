@@ -451,6 +451,8 @@ def check_primer_positions(forward_start, reverse_end, SNP_avoid_range, sec_str_
     SNPs_REV = {}
     sec_REV = []
     for position,snip in SNP_avoid_range.items():
+        if position == "\n" or snip =="\n":
+            continue
         if position >= reverse_end+1 - len(reverse) and position <= reverse_end:
             SNPs_REV[position-reverse_end] = snip
     for position in sec_str_avoid_range.replace("[", "").replace("]", "").split(","):
