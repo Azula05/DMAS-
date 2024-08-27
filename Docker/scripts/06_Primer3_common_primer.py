@@ -105,6 +105,9 @@ for line in snp_file:
         avoid = avoid + str(position) + "," + "1" + " "
 avoid = avoid + str(targeted_snp_pos) + "," + "1" + " "
 
+include_start = int(targeted_snp_pos) - len(forward)- 1
+include_end = len(template)
+
 # write the forward input file for primer3
 ## settings in the input file will overwrite the settings in the primer3 settings file
 Primer3_common = open("Primer3_" + seq_ID + "_common_primer_REV.txt", "w")
@@ -133,10 +136,15 @@ Primer3_common.write("PRIMER_DNA_CONC=" + dnac_conc +"\n")
 Primer3_common.write("PRIMER_SALT_MONOVALENT="+ Na_conc + "\n")
 Primer3_common.write("PRIMER_SALT_DIVALENT="+ Mg_conc + "\n")
 Primer3_common.write("PRIMER_DNTP_CONC="+ dNTPs_conc + "\n")
+Primer3_common.write("SEQUENCE_INCLUDED_REGION=" + str(include_start) + "," + str(include_end) + "\n")
 Primer3_common.write("SEQUENCE_EXCLUDED_REGION=" + avoid + "\n")
 Primer3_common.write("=\n")
 
 Primer3_common.close()
+
+# Reverse primer
+include_start = 1
+include_end = int(targeted_snp_pos) + len(reverse) + 1
 
 # write the reverse input file for primer3
 Primer3_common = open("Primer3_" + seq_ID + "_common_primer_FWD.txt", "w")
@@ -165,6 +173,7 @@ Primer3_common.write("PRIMER_DNA_CONC=" + dnac_conc +"\n")
 Primer3_common.write("PRIMER_SALT_MONOVALENT="+ Na_conc + "\n")
 Primer3_common.write("PRIMER_SALT_DIVALENT="+ Mg_conc + "\n")
 Primer3_common.write("PRIMER_DNTP_CONC="+ dNTPs_conc + "\n")
+Primer3_common.write("SEQUENCE_INCLUDED_REGION=" + str(include_start) + "," + str(include_end) + "\n")
 Primer3_common.write("SEQUENCE_EXCLUDED_REGION=" + avoid + "\n")
 Primer3_common.write("=\n")
 
