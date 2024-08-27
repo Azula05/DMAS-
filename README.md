@@ -9,7 +9,7 @@ Figure 1: primers and template mismatches before PCR.
 
 In Figure 1 all possible combinations are shown before PCR. Both wild type (WT) and mutant (MUT) have a normal primer and a primer where a mismatch is introduced at position -2, -3 or -4. This way a single mismatch (MM) is achieved when combining this special primer with the corresponding template and 2 MM when combined with the other template.
 
-![Positions](https://github.com/user-attachments/assets/d61ffd19-47d9-4882-831f-56533c37cfdc)
+<img src="https://github.com/user-attachments/assets/d61ffd19-47d9-4882-831f-56533c37cfdc" alt="Positions" style="width:300px;"/>
 Figure 2: illustration of how the positions are counted.
 
 ##  Contents
