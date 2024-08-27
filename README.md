@@ -29,6 +29,7 @@ Figure 2: illustration of how the positions are counted.
 
 <hr>
 
+
 ## Installation
 
 ### Requirements
@@ -47,8 +48,10 @@ wget https://genome-idx.s3.amazonaws.com/bt/GRCh38_noalt_as.zip
 
 # Unzip the files
 unzip GRCh38_noalt_as.zip
-```  
+```
+
 <hr>
+
 
 ## Input
 As input this pipeline requires a sequence with a position of interest and the corresponding coordinates in a specific format. Input can be given via 1 of 2 methods. Note that for both methods **the coordinates are zero-based**.
@@ -84,7 +87,9 @@ TCCTATAACATGGGAGAGTCTTTCTTTTTAGGATTTAGTGGCTCAACAGGTTTGGAAGGACTTGGGAAGGGGAGGCTTCC
 
 Make sure your sequence is at least 150 nucleotides long to be able to design primers. The input should be your sequence with [WT/MUT] as your position of interest, followed by a tab and the chromosomal location of this sequence (0-based; UCSC)
 
+
 <hr>
+
 
 ## Usage
 
@@ -105,6 +110,8 @@ A help message with available options and arguments is provided by adding the op
 nextflow run DMAS.nf --help
 ```
 This will display the help message.
+
+
 
 ### The available parameters
 The easiest way to adapt parameters in the pipeline is to change them in the *nextflow.config* file and just run the pipeline with `nextflow run DMAS.nf -profile standard --cpus 3`. All available arguments are described below.
@@ -154,6 +161,8 @@ Temperature prediction:
 - **position**: position to incorporate the mismatch see Figure 1; options: 2,3,4 or 'all' (default: all)
 - **single_MM_Tm**: ideal melting temperature for single mismatches °C (default: 55)
 
+
+
 ### Salt settings
 Above the the default values for the salt settings are displayed under temperature prediction. In the following part different options are given corresponding to different master mixes.
 
@@ -174,6 +183,10 @@ Above the the default values for the salt settings are displayed under temperatu
 | Stilla Technologies (all Crystal Digital PCR mastermixes)                  | /          | 5.5       | 60       | 1.4        |
 
 \* subtract 3-4 °C based on additives
+
+
+<hr>
+
 
 ## Output
 The output in your chosen output directory should look like this:
@@ -251,11 +264,21 @@ Output/
 	- **Validation_strict**: Primer pairs lost based on primer3 primer pair validation with filter set to loose
 
 
+<hr>
 
 ## Explanation of the pipeline
 
+
+<hr>
+
+
 ## Filters
 recommended to turn validation off => too stringent evaluate yourself
+
+
+<hr>
+
+
 ## Opening a tsv file in excel
 
 1) Open excel
