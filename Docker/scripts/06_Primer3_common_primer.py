@@ -103,6 +103,7 @@ for line in snp_file:
         continue
     else:
         avoid = avoid + str(position) + "," + "1" + " "
+avoid = avoid + str(targeted_snp_pos) + "," + "1" + " "
 
 # write the forward input file for primer3
 ## settings in the input file will overwrite the settings in the primer3 settings file
