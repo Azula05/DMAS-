@@ -5,11 +5,13 @@ This repository contains the scripts, docker file and pipeline for designing dou
 DMAS primers are created to selectively amplify a specific allele (variant) and obtain an extra mismatch when combining a specific primer with the opposite template (see Figure1). This primer is designed with two intentional mismatches near its 3' end, in addition to the mismatch created by the allele itself. This way, enhance the specificity of the primer is obtained and a more distinct difference can be observed in the qPCR results. These additional mismatches are introduced 2, 3 or 4 positions before (5') of the position of interest or position 0 (see figure 2).
 
 <img src="https://github.com/user-attachments/assets/5fd1b8e3-1889-4c54-bbfd-5a3e331e5c3f" alt="MM explanation" style="width:500px;"/>
+
 Figure 1: primers and template mismatches before PCR.
 
 In Figure 1 all possible combinations are shown before PCR. Both wild type (WT) and mutant (MUT) have a normal primer and a primer where a mismatch is introduced at position -2, -3 or -4. This way a single mismatch (MM) is achieved when combining this special primer with the corresponding template and 2 MM when combined with the other template.
 
 <img src="https://github.com/user-attachments/assets/d61ffd19-47d9-4882-831f-56533c37cfdc" alt="Positions" style="width:500px;"/>
+
 Figure 2: illustration of how the positions are counted.
 
 ##  Contents
@@ -26,6 +28,7 @@ Figure 2: illustration of how the positions are counted.
 - [Opening a tsv file](##Opening-a-tsv-file-in-excel)
 
 <hr>
+
 ## Installation
 
 ### Requirements
@@ -46,6 +49,7 @@ wget https://genome-idx.s3.amazonaws.com/bt/GRCh38_noalt_as.zip
 unzip GRCh38_noalt_as.zip
 ```  
 <hr>
+
 ## Input
 As input this pipeline requires a sequence with a position of interest and the corresponding coordinates in a specific format. Input can be given via 1 of 2 methods. Note that for both methods **the coordinates are zero-based**.
 
@@ -81,6 +85,7 @@ TCCTATAACATGGGAGAGTCTTTCTTTTTAGGATTTAGTGGCTCAACAGGTTTGGAAGGACTTGGGAAGGGGAGGCTTCC
 Make sure your sequence is at least 150 nucleotides long to be able to design primers. The input should be your sequence with [WT/MUT] as your position of interest, followed by a tab and the chromosomal location of this sequence (0-based; UCSC)
 
 <hr>
+
 ## Usage
 
 This pipeline is for now only capable of doing **substitutions**, deletions and insertions are not possible in this version of the tool. The targeted positions in the sequence should be specified using the following syntax: [N/N]. With the first base being the wild type and the second one being the variant. Input can eighter be given directly (Method 2) or created from the location of the variant (Method 1). This pipeline is able to handle multiple input lines at once; please not that some processes in this pipeline take time. It may seem like the pipeline is froze but this is not the case. Checking the specificity takes the most time, this can be skipped by turning this option of in the config file. This way the pipeline can be ran faster if you are not interested in off-targets.
@@ -256,16 +261,23 @@ recommended to turn validation off => too stringent evaluate yourself
 1) Open excel
 2) Press Open
 <img src="https://github.com/user-attachments/assets/44856f00-9276-4408-a4be-403522a92266" alt="open file" style="width:300px;"/>
+
 4) Browse to the file location (output folder)
 <img src="https://github.com/user-attachments/assets/c7ddf87a-38ee-45f4-83be-2eb8430d07ba" alt="browse" style="width:300px"/>
+
 6) Make sure the dropdown in the bottom right is set to: "All Files (\*.\*)"
 <img src="https://github.com/user-attachments/assets/a7faa1d9-9406-4a9d-9a60-eea87f743729" alt="all files" style="width:300px"/>
+
 8) Open the file
 9) A pop-up will appear, select delimited and next
 <img src="https://github.com/user-attachments/assets/28e33377-7908-4522-9eb2-6647462be485" alt="delimiter" style="width:300px"/>
+
 10) Select Tab
 <img src="https://github.com/user-attachments/assets/4e9bf009-214c-421d-bae4-35b6f5984338" alt="tab seperated" style="width:300px"/>
+
+
 11) Next
 12) Select general
 13) Press Finish
 <img src="https://github.com/user-attachments/assets/2548a61a-a8eb-40e8-8b80-f0d9d7546fa2" alt="finish" style="width:300px"/>
+
