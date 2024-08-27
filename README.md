@@ -15,14 +15,14 @@ In Figure 1 all possible combinations are shown before PCR. Both wild type (WT) 
 Figure 2: illustration of how the positions are counted.
 
 ##  Contents
-- [Installation](##Installation)
-- [Input](##Input)
-	- [Method1](#Method_1:-Location-of-the-position-of-interest)
-	- [Method2](#Method-2:-Provide-the-input-directly)
-- [Usage](##Usage)
+- [Installation](#Installation)
+- [Input](#Input)
+	- [Method1](#Method_1-Location-of-the-position-of-interest)
+	- [Method2](#Method-2-Provide-the-input-directly)
+- [Usage](#Usage)
 	- [Help](#The-available-parameters)
 	- [Master mixes](#Salt-settings)
-- [Output](##Output)
+- [Output](#Output)
 - Process (all steps explained)
 - Filters: defenities, hoe, elke stap kort uitleggen. wat is SNP etc, structure, specificiteit 
 - [Opening a tsv file](#Opening-a-tsv-file-in-excel)
@@ -35,7 +35,7 @@ Figure 2: illustration of how the positions are counted.
 #### A) Software:
 This pipeline can be entirely ran in a docker environment, therefore the only programs that have to be installed locally are: [Docker](https://docs.docker.com/engine/install/) and [Nextflow](https://www.nextflow.io/docs/latest/install.html). 
 #### B) Bowtie2 index
-This [pipeline](##Explanation-of-the-pipeline) makes use of Bowtie2, to check if the given coordinates match the template and search for off-targets associated with the primer. To be able to do this it requires an index, which can be created by following the steps described below. Bowtie2 does not have to be installed for this process.
+This [pipeline](#Explanation-of-the-pipeline) makes use of Bowtie2, to check if the given coordinates match the template and search for off-targets associated with the primer. To be able to do this it requires an index, which can be created by following the steps described below. Bowtie2 does not have to be installed for this process.
 
 - Download the zip file for hg38 in /Assets/GRCh38/Index_bowtie/
 ```
@@ -53,7 +53,7 @@ unzip GRCh38_noalt_as.zip
 ## Input
 As input this pipeline requires a sequence with a position of interest and the corresponding coordinates in a specific format. Input can be given via 1 of 2 methods. Note that for both methods **the coordinates are zero-based**.
 
-### Method 1: Location of the position of interest
+### Method 1 Location of the position of interest
 By collecting the chromosomal locations and variant of interest, you can use the included 00_Create_input.py script to make the input for you. This script can be run via the [docker image](https://hub.docker.com/r/oncornalab/dmas) and the output will be called **Input_file.txt**. *Please use this name as input for the pipeline!* By default 150 bases left and right of the template will be picked to create the template. You can change this length by adding the -l option.
 
 To do this your input for this script should look as following (make sure to use a tab!):
@@ -73,7 +73,7 @@ or
 docker run -v "$PWD":/work -w /work oncornalab/dmas:latest 00_Create_input.py -i /work/[YOUR_INPUT_FILE] -l 150
 ```
 
-### Method 2: Provide the input directly
+### Method 2 Provide the input directly
 You can skip the process described in method 1 and create the output from this script yourself if you are working with a sequence which might contain variants such as specific patient sequencing data. To do this your input file should look like the example below, make sure to use tabs instead of four spaces. You can name your file **Input_file.txt**, this way you don't have to change the input file in the nextflow.config file. However, you can give this any name you like as long as it is described in the config file where it is located and how it is called.
 
 Example:
@@ -236,7 +236,7 @@ Output/
 	- Validation_filter_loose
 	- Validation_filter_strict
 
-- **DMAS_log.txt**: This log file shows how many primer pairs were lost during the different [filter steps](##Filters) and how many remain in the end. The following columns are present:
+- **DMAS_log.txt**: This log file shows how many primer pairs were lost during the different [filter steps](#Filters) and how many remain in the end. The following columns are present:
 	- **Name**: ID ex. DMAS-0
 	- **Total**: Total amount of sprimer pairs at the start
 	- **Specificity_loose**: Primer pairs lost with specificity filter set to loose
