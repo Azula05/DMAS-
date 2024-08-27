@@ -17,7 +17,7 @@ Figure 2: illustration of how the positions are counted.
 ##  Contents
 - [Installation](##Installation)
 - [Input](##Input)
-	- [Method1](###Method-1:-Location-of-the-position-of-interest)
+	- [Method1](###Method_1:_Location_of_the_position_of_interest)
 	- [Method2](###Method-2:-Provide-the-input-directly)
 - [Usage](##Usage)
 	- [Help](###The-available-parameters)
