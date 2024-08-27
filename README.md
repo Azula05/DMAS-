@@ -4,12 +4,12 @@ This repository contains the scripts, docker file and pipeline for designing dou
 
 DMAS primers are created to selectively amplify a specific allele (variant) and obtain an extra mismatch when combining a specific primer with the opposite template (see Figure1). This primer is designed with two intentional mismatches near its 3' end, in addition to the mismatch created by the allele itself. This way, enhance the specificity of the primer is obtained and a more distinct difference can be observed in the qPCR results. These additional mismatches are introduced 2, 3 or 4 positions before (5') of the position of interest or position 0 (see figure 2).
 
-![MM first cycle](https://github.com/user-attachments/assets/5fd1b8e3-1889-4c54-bbfd-5a3e331e5c3f)
+<img src="https://github.com/user-attachments/assets/5fd1b8e3-1889-4c54-bbfd-5a3e331e5c3f" alt="MM explanation" style="width:500px;"/>
 Figure 1: primers and template mismatches before PCR.
 
 In Figure 1 all possible combinations are shown before PCR. Both wild type (WT) and mutant (MUT) have a normal primer and a primer where a mismatch is introduced at position -2, -3 or -4. This way a single mismatch (MM) is achieved when combining this special primer with the corresponding template and 2 MM when combined with the other template.
 
-<img src="https://github.com/user-attachments/assets/d61ffd19-47d9-4882-831f-56533c37cfdc" alt="Positions" style="width:300px;"/>
+<img src="https://github.com/user-attachments/assets/d61ffd19-47d9-4882-831f-56533c37cfdc" alt="Positions" style="width:500px;"/>
 Figure 2: illustration of how the positions are counted.
 
 ##  Contents
@@ -255,17 +255,17 @@ recommended to turn validation off => too stringent evaluate yourself
 
 1) Open excel
 2) Press Open
-![Pasted image 20240827154102](https://github.com/user-attachments/assets/44856f00-9276-4408-a4be-403522a92266)
-3) Browse to the file location (output folder)
-![Pasted image 20240827154147](https://github.com/user-attachments/assets/c7ddf87a-38ee-45f4-83be-2eb8430d07ba)
-4) Make sure the dropdown in the bottom right is set to: "All Files (\*.\*)"
-![Pasted image 20240827154211](https://github.com/user-attachments/assets/a7faa1d9-9406-4a9d-9a60-eea87f743729)
-5) Open the file
-6) A pop-up will appear, select delimited and next
-![Pasted image 20240827154255](https://github.com/user-attachments/assets/28e33377-7908-4522-9eb2-6647462be485)
-7) Select Tab
-![Pasted image 20240827154310](https://github.com/user-attachments/assets/4e9bf009-214c-421d-bae4-35b6f5984338)
-8) Next
-9) Select general
-10) Press Finish
-![Pasted image 20240827154344](https://github.com/user-attachments/assets/2548a61a-a8eb-40e8-8b80-f0d9d7546fa2)
+<img src="https://github.com/user-attachments/assets/44856f00-9276-4408-a4be-403522a92266" alt="open file" style="width:300px;"/>
+4) Browse to the file location (output folder)
+<img src="https://github.com/user-attachments/assets/c7ddf87a-38ee-45f4-83be-2eb8430d07ba" alt="browse" style="width:300px"/>
+6) Make sure the dropdown in the bottom right is set to: "All Files (\*.\*)"
+<img src="https://github.com/user-attachments/assets/a7faa1d9-9406-4a9d-9a60-eea87f743729" alt="all files" style="width:300px"/>
+8) Open the file
+9) A pop-up will appear, select delimited and next
+<img src="https://github.com/user-attachments/assets/28e33377-7908-4522-9eb2-6647462be485" alt="delimiter" style="width:300px"/>
+10) Select Tab
+<img src="https://github.com/user-attachments/assets/4e9bf009-214c-421d-bae4-35b6f5984338" alt="tab seperated" style="width:300px"/>
+11) Next
+12) Select general
+13) Press Finish
+<img src="https://github.com/user-attachments/assets/2548a61a-a8eb-40e8-8b80-f0d9d7546fa2" alt="finish" style="width:300px"/>
