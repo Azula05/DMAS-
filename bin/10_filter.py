@@ -226,12 +226,15 @@ for line in lines:
             # LOOSE
             def SNP_loose(SNPs, SNP_tag_loose):
                 # if the SNPs are not on position -2,-3 or -4 they pass
-                for i in SNPs:
-                    if i in [-2,-3,-4]:
-                        SNP_tag = "FAIL"
-                # if it has not yet failed it passes
-                if SNP_tag_loose != "FAIL":
-                    SNP_tag_loose = "PASS"
+                if isinstance(SNPs, list):
+                    for i in SNPs:
+                        if i in [-2,-3,-4]:
+                            SNP_tag = "FAIL"
+                    # if it has not yet failed it passes
+                    if SNP_tag_loose != "FAIL":
+                        SNP_tag_loose = "PASS"
+                else:
+                    SNP_tag_loose = "FAIL"
                 return SNP_tag_loose
 
             
