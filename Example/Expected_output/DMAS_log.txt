@@ -1,0 +1,2 @@
+Name	Total	Specificity_loose	Specificity_strict	SNP_loose	SNP_strict	Sec_str_loose	Sec_str_strict	Sec_str_amp_loose	Sec_str_amp_strict	Validation_loose	Validation_strict	Pass_loose	Pass_strict
+DMAS-0	36	2	2	0	18	0	0	0	0	18	18	18	6
