@@ -26,8 +26,8 @@ Throughout the documentation an example will be shown in each steps if you want 
 	- [Help](#The-available-parameters)
 	- [Master mixes](#Salt-settings)
 - [Output](#Output)
-- Process (all steps explained)
-- Filters: defenities, hoe, elke stap kort uitleggen. wat is SNP etc, structure, specificiteit 
+- [Process](#Explanation-of-the-pipeline)
+- [Filters](#Filters)
 - [Opening a tsv file](#Opening-a-tsv-file-in-excel)
 
 <hr>
