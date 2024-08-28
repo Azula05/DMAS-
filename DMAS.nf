@@ -425,7 +425,7 @@ process sec_str_amp{
 
 	script:
 	"""
-	08_get_sec_str_amp_ViennaRNA.py -i $ind_dmas_table_handle
+	08_get_sec_str_amp_ViennaRNA.py -i $ind_dmas_table_handle -T $params.opt_Tm -na $params.na
 	"""
 }
 

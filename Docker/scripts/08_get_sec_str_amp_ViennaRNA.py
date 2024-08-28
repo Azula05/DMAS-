@@ -8,10 +8,14 @@ import os
 # get the arguments
 parser = argparse.ArgumentParser(description="give arguments to main DMAS script")
 parser.add_argument('-i', nargs=1, required=True, help="input tsv file with the primers table")
+parser.add_argument("-T", nargs=1, required=True, help="opt_tm")
+parser.add_argument("-na", nargs=1, required=True, help="Na concentration")
 args = parser.parse_args()
 
 input_file = args.i[0]
-
+opt_tm = args.T[0]
+na = args.na[0]
+na = int(na)/1000
 # Get the ID
 id = input_file.split('_')[0]
 id = id.split("/")[-1]
@@ -37,7 +41,7 @@ with open(name, 'w') as output:
             try:
                 amplicon = line[19]
                 ### Run viennaRNA
-                command = "echo " + amplicon +"| RNAfold -p --noconv -T 60.0 -P DNA --salt 0.05"
+                command = "echo " + amplicon +"| RNAfold -p --noconv -T " + opt_tm + " -P DNA --salt " + str(na)
                 process = os.popen(command)
                 output2 = process.read()
                 process.close()
