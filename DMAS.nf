@@ -35,8 +35,8 @@ params.min_left_prime = 1	// min left primer distance
 // Primer Tm parameters:
 params.diff_tm = 2			// melting temp difference between primers
 params.min_tm = 58			// min melting temp
-params.max_tm = 60			// max melting temp
-params.opt_tm = 59			// optimal melting temp
+params.max_tm = 62			// max melting temp
+params.opt_tm = 60			// optimal melting temp
 // Primer GC parameters:
 params.min_gc = 30			// min GC content
 params.opt_gc = 50			// optimal GC content
@@ -298,7 +298,7 @@ process sec_str_temp {
 
 	script:
 	"""
-	03_get_sec_str_temp_ViennaRNA.py -t $ind_dmas_file_handle -T $params.opt_Tm -na $params.na
+	03_get_sec_str_temp_ViennaRNA.py -t $ind_dmas_file_handle -T $params.opt_tm -na $params.na
 	"""
 }
 
