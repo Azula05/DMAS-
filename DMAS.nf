@@ -272,7 +272,6 @@ process checkCoordinates {
 	output:
 	path 'warningDMAS-*.txt'
 
-	when: params.coords == true && params.species == 'human'
 	when: params.species == 'human'
 
 	script:
@@ -299,7 +298,7 @@ process sec_str_temp {
 
 	script:
 	"""
-	03_get_sec_str_temp_ViennaRNA.py -t $ind_dmas_file_handle
+	03_get_sec_str_temp_ViennaRNA.py -t $ind_dmas_file_handle -T $params.opt_Tm -na $params.na
 	"""
 }
 

@@ -9,8 +9,13 @@ import os
 
 parser = argparse.ArgumentParser(description="give arguments to main DMAS script")
 parser.add_argument("-t", nargs=1, required=True, help="sequence")
+parser.add_argument("-T", nargs=1, required=True, help="opt_tm")
+parser.add_argument("-na", nargs=1, required=True, help="Na concentration")
 args = parser.parse_args()
 
+opt_tm = args.T[0]
+na = args.na[0]
+na = int(na)/1000
 #######################################################################################################################
 ################   GET SECONDARY STRUCTURE OF THE TEMPLATE SEQUENCES USING VIENNARNA   ################################
 #######################################################################################################################
@@ -30,7 +35,7 @@ mutant = seq.split("[")[0] + seq.split("/")[1].split("]")[0] + seq.split("]")[1]
 ############################################################################################
 ##################################   Wild type   ###########################################
 ############################################################################################
-command = "echo " + wild +"| RNAfold -p --noconv -T 60.0 -P DNA --salt 0.05"
+command = "echo " + wild +"| RNAfold -p --noconv -T " + opt_tm + " -P DNA --salt " + str(na)
 process = os.popen(command)
 output = process.read()
 process.close()  # Ensure proper resource management
@@ -44,7 +49,7 @@ WT_delta_g = arguments[2].split(" ",1)[1]
 ############################################################################################
 ##################################    Mutation   ###########################################
 ############################################################################################
-command = "echo " + mutant +"| RNAfold -p --noconv -T 60.0 -P DNA --salt 0.05"
+command = "echo " + mutant +"| RNAfold -p --noconv -T " + opt_tm + " -P DNA --salt " + str(na)
 process = os.popen(command)
 output = process.read()
 process.close()  # Ensure proper resource management
