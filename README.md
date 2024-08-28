@@ -40,8 +40,8 @@ This [pipeline](#Explanation-of-the-pipeline) makes use of Bowtie2, to check if 
 
 - Download the zip file for hg38 in /Assets/GRCh38/Index_bowtie/
 ```
-# Move to the correct file location
-cd DMAS/Assets/GRCh38/Index_bowtie/
+# Move to the correct file location (in DMAS folder)
+cd ./Assets/GRCh38/Index_bowtie/
 
 # Download the files
 wget https://genome-idx.s3.amazonaws.com/bt/GRCh38_noalt_as.zip
